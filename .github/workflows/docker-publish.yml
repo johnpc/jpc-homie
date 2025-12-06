@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/homie
+  IMAGE_NAME: mrorbitman/homie
 
 jobs:
   build:
