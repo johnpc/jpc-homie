@@ -268,11 +268,6 @@ export default function ChatInterface() {
     </div>
   );
 }
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
 
       <div className="border-t p-4">
         <div className="flex gap-2">
