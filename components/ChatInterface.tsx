@@ -268,39 +268,3 @@ export default function ChatInterface() {
     </div>
   );
 }
-
-      <div className="border-t p-4">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Ask me to control your smart home..."
-            disabled={isLoading}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 text-black"
-          />
-          <button
-            onClick={toggleListening}
-            disabled={isLoading}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              isListening 
-                ? 'bg-red-500 text-white hover:bg-red-600' 
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            } disabled:bg-gray-300 disabled:cursor-not-allowed`}
-            title="Speech to text"
-          >
-            {isListening ? '🔴' : '🎤'}
-          </button>
-          <button
-            onClick={() => void sendMessage()}
-            disabled={isLoading || !input.trim()}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLoading ? 'Sending...' : 'Send'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
