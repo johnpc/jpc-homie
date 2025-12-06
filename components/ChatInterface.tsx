@@ -180,7 +180,7 @@ export default function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-4xl mx-auto bg-white">
+    <div className="flex flex-col h-full max-w-4xl mx-auto bg-white">
       <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-3 sm:gap-4 px-4">
@@ -243,7 +243,7 @@ export default function ChatInterface() {
             onKeyPress={handleKeyPress}
             placeholder="Ask me to control your smart home..."
             disabled={isLoading}
-            className="flex-1 px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
             onClick={toggleListening}
