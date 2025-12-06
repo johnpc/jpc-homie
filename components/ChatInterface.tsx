@@ -180,18 +180,18 @@ export default function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col h-[600px] max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex flex-col h-screen max-w-4xl mx-auto bg-white">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full gap-4">
-            <h2 className="text-2xl font-semibold text-gray-700">👋 Hi! I'm Homie</h2>
-            <p className="text-gray-500">Try asking me:</p>
+          <div className="flex flex-col items-center justify-center h-full gap-3 sm:gap-4 px-4">
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-700">👋 Hi! I'm Homie</h2>
+            <p className="text-sm sm:text-base text-gray-500">Try asking me:</p>
             <div className="flex flex-wrap gap-2 justify-center max-w-md">
               {suggestions.map((suggestion, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSuggestionClick(suggestion)}
-                  className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-full text-sm transition-colors"
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-full text-xs sm:text-sm transition-colors"
                 >
                   {suggestion}
                 </button>
@@ -205,7 +205,7 @@ export default function ChatInterface() {
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[80%] rounded-lg px-4 py-2 ${
+              className={`max-w-[85%] sm:max-w-[80%] rounded-lg px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base ${
                 msg.role === 'user'
                   ? 'bg-blue-500 text-white'
                   : msg.role === 'tool'
@@ -214,7 +214,7 @@ export default function ChatInterface() {
               }`}
             >
               {msg.role === 'tool' ? (
-                <span>🔧 Used tool: {msg.content}</span>
+                <span className="text-xs sm:text-sm">🔧 Used tool: {msg.content}</span>
               ) : (
                 <p className="whitespace-pre-wrap">{msg.content}</p>
               )}
@@ -223,11 +223,51 @@ export default function ChatInterface() {
         ))}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-200 text-gray-600 rounded-lg px-4 py-2">
+            <div className="bg-gray-200 text-gray-600 rounded-lg px-3 py-2 sm:px-4 sm:py-2">
               <div className="flex items-center gap-2">
-                <div className="animate-spin h-4 w-4 border-2 border-gray-600 border-t-transparent rounded-full"></div>
-                Thinking...
+                <div className="animate-spin h-3 w-3 sm:h-4 sm:w-4 border-2 border-gray-600 border-t-transparent rounded-full"></div>
+                <span className="text-sm sm:text-base">Thinking...</span>
               </div>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div className="border-t p-3 sm:p-4 bg-white">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Ask me to control your smart home..."
+            disabled={isLoading}
+            className="flex-1 px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            onClick={toggleListening}
+            disabled={isLoading}
+            className={`px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-colors ${
+              isListening
+                ? 'bg-red-500 hover:bg-red-600 text-white'
+                : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+            } disabled:opacity-50 disabled:cursor-not-allowed text-lg sm:text-xl`}
+          >
+            {isListening ? '🔴' : '🎤'}
+          </button>
+          <button
+            onClick={() => void sendMessage()}
+            disabled={isLoading || !input.trim()}
+            className="px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-base bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
             </div>
           </div>
         )}
