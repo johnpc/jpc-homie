@@ -11,52 +11,68 @@ A conversational AI assistant for controlling your Home Assistant smart home dev
 - 🔧 Real-time tool usage visualization
 - 📱 Mobile-friendly interface
 
-## Quick Start
+## Quick Start with Docker
 
-### Docker (Recommended)
+### Using Docker Compose (Recommended)
 
 ```bash
 # Create .env file
-cp .env.example .env
-# Edit .env with your Home Assistant URL and token
+cat > .env << EOF
+HOME_ASSISTANT_URL=https://your-home-assistant.duckdns.org
+HOME_ASSISTANT_TOKEN=your_long_lived_access_token
+EOF
 
-# Run with Docker Compose
+# Start the service
 docker-compose up -d
 
-# Or run directly
+# View logs
+docker-compose logs -f
+
+# Stop the service
+docker-compose down
+```
+
+### Using Docker directly
+
+```bash
 docker run -d \
+  --name homie \
   -p 3000:3000 \
   -e HOME_ASSISTANT_URL=https://your-ha.duckdns.org \
   -e HOME_ASSISTANT_TOKEN=your_token \
-  your-dockerhub-username/homie:latest
+  mrorbitman/homie:main
 ```
 
-### Local Development
+### Using pre-built image from Docker Hub
+
+```bash
+docker pull mrorbitman/homie:main
+```
+
+Open [http://localhost:3000](http://localhost:3000)
+
+## Local Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
-
 ## Environment Variables
 
 - `HOME_ASSISTANT_URL` - Your Home Assistant URL
 - `HOME_ASSISTANT_TOKEN` - Long-lived access token from Home Assistant
 
+Get your token from Home Assistant:
+1. Go to Profile → Security → Long-Lived Access Tokens
+2. Click "Create Token"
+3. Copy the token
+
 ## GitHub Actions Setup
 
-To enable automatic Docker Hub publishing:
-
-1. Go to your GitHub repository Settings → Secrets and variables → Actions
-2. Add these secrets:
-   - `DOCKERHUB_USERNAME` - Your Docker Hub username
-   - `DOCKERHUB_TOKEN` - Docker Hub access token (create at hub.docker.com/settings/security)
-
-Images will be automatically built and pushed on:
-- Push to `main` branch
-- Version tags (e.g., `v1.0.0`)
+Images are automatically built and pushed to Docker Hub on:
+- Push to `main` branch → tagged as `main`
+- Version tags (e.g., `v1.0.0`) → tagged as `1.0.0` and `1.0`
 
 ## License
 

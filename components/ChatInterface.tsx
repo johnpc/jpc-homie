@@ -7,6 +7,41 @@ interface Message {
   content: string;
 }
 
+interface SpeechRecognitionEvent extends Event {
+  results: {
+    [index: number]: {
+      [index: number]: {
+        transcript: string;
+      };
+    };
+  };
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: SpeechRecognitionErrorEvent) => void;
+  onend: () => void;
+  start: () => void;
+  stop: () => void;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition?: {
+      new(): SpeechRecognition;
+    };
+    webkitSpeechRecognition?: {
+      new(): SpeechRecognition;
+    };
+  }
+}
+
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -25,9 +60,9 @@ export default function ChatInterface() {
 
   useEffect(() => {
     if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
-      const SpeechRecognition = (window as { SpeechRecognition?: typeof window.SpeechRecognition; webkitSpeechRecognition?: typeof window.SpeechRecognition }).SpeechRecognition || (window as { webkitSpeechRecognition?: typeof window.SpeechRecognition }).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
+      const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognitionClass) {
+        const recognition = new SpeechRecognitionClass();
         recognition.continuous = false;
         recognition.interimResults = false;
         
@@ -100,11 +135,11 @@ export default function ChatInterface() {
             };
 
             if (data.type === 'text' && data.content) {
-              setMessages((prev) => [...prev, { role: 'assistant', content: data.content }]);
+              setMessages((prev) => [...prev, { role: 'assistant', content: data.content as string }]);
             }
 
             if (data.type === 'tool' && data.name) {
-              setMessages((prev) => [...prev, { role: 'tool', content: data.name }]);
+              setMessages((prev) => [...prev, { role: 'tool', content: data.name as string }]);
             }
 
             if (data.type === 'done') {
