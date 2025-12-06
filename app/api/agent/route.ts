@@ -35,6 +35,7 @@ Be proactive and action-oriented. Users prefer quick execution over lengthy expl
 
 interface AgentRequest {
   prompt: string;
+  messages?: Array<{ role: string; content: string }>;
 }
 
 class HomeAssistantClient {
@@ -238,7 +239,7 @@ function createTools(haClient: HomeAssistantClient) {
 
 export async function POST(req: NextRequest): Promise<Response> {
   try {
-    const { prompt }: AgentRequest = await req.json();
+    const { prompt, messages }: AgentRequest = await req.json();
 
     if (!prompt) {
       return Response.json({ error: 'Prompt is required' }, { status: 400 });
@@ -254,6 +255,17 @@ export async function POST(req: NextRequest): Promise<Response> {
     const haClient = new HomeAssistantClient({ url: haUrl, token: haToken });
     const tools = createTools(haClient);
 
+    // Build conversation context
+    let conversationContext = '';
+    if (messages && messages.length > 0) {
+      conversationContext = '\n\nPrevious conversation:\n' + messages.map(msg => {
+        if (msg.role === 'user') return `User: ${msg.content}`;
+        if (msg.role === 'assistant') return `Assistant: ${msg.content}`;
+        if (msg.role === 'tool') return `[Used tool: ${msg.content}]`;
+        return '';
+      }).filter(Boolean).join('\n') + '\n\nCurrent request:';
+    }
+
     const agent = new Agent({
       systemPrompt: SYSTEM_PROMPT,
       tools: tools,
@@ -262,7 +274,9 @@ export async function POST(req: NextRequest): Promise<Response> {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const event of agent.stream(prompt)) {
+          const fullPrompt = conversationContext ? conversationContext + '\n' + prompt : prompt;
+          
+          for await (const event of agent.stream(fullPrompt)) {
             if (event.type === 'messageAddedEvent' && event.message) {
               const msg = event.message as { role: string; content: Array<{ type: string; text?: string; name?: string }> };
               

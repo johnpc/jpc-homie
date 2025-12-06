@@ -102,6 +102,7 @@ export default function ChatInterface() {
 
     const userMessage: Message = { role: 'user', content: input };
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
     setIsLoading(true);
 
@@ -109,7 +110,10 @@ export default function ChatInterface() {
       const response = await fetch('/api/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: input }),
+        body: JSON.stringify({ 
+          prompt: currentInput,
+          messages: messages,
+        }),
       });
 
       if (!response.ok) throw new Error('Failed to get response');
