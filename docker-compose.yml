@@ -4,7 +4,7 @@ services:
   homie:
     build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - HOME_ASSISTANT_URL=${HOME_ASSISTANT_URL}
       - HOME_ASSISTANT_TOKEN=${HOME_ASSISTANT_TOKEN}

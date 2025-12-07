@@ -34,10 +34,10 @@ interface SpeechRecognition extends EventTarget {
 declare global {
   interface Window {
     SpeechRecognition?: {
-      new(): SpeechRecognition;
+      new (): SpeechRecognition;
     };
     webkitSpeechRecognition?: {
-      new(): SpeechRecognition;
+      new (): SpeechRecognition;
     };
   }
 }
@@ -59,27 +59,30 @@ export default function ChatInterface() {
   }, [messages]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+    if (
+      typeof window !== 'undefined' &&
+      ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+    ) {
       const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognitionClass) {
         const recognition = new SpeechRecognitionClass();
         recognition.continuous = false;
         recognition.interimResults = false;
-        
+
         recognition.onresult = (event: SpeechRecognitionEvent) => {
           const transcript = event.results[0][0].transcript;
           setInput(transcript);
           setIsListening(false);
         };
-        
+
         recognition.onerror = () => {
           setIsListening(false);
         };
-        
+
         recognition.onend = () => {
           setIsListening(false);
         };
-        
+
         recognitionRef.current = recognition;
       }
     }
@@ -87,7 +90,7 @@ export default function ChatInterface() {
 
   const toggleListening = (): void => {
     if (!recognitionRef.current) return;
-    
+
     if (isListening) {
       recognitionRef.current.stop();
       setIsListening(false);
@@ -110,7 +113,7 @@ export default function ChatInterface() {
       const response = await fetch('/api/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           prompt: currentInput,
           messages: messages,
         }),
@@ -139,7 +142,10 @@ export default function ChatInterface() {
             };
 
             if (data.type === 'text' && data.content) {
-              setMessages((prev) => [...prev, { role: 'assistant', content: data.content as string }]);
+              setMessages((prev) => [
+                ...prev,
+                { role: 'assistant', content: data.content as string },
+              ]);
             }
 
             if (data.type === 'tool' && data.name) {
@@ -171,12 +177,12 @@ export default function ChatInterface() {
   };
 
   const suggestions = [
-    "Play songs by Queen",
-    "Turn my lights red",
-    "Are my heated stairs on?",
-    "Open the garage",
-    "Set bedroom to 72 degrees",
-    "Play Bohemian Rhapsody",
+    'Play songs by Queen',
+    'Turn my lights red',
+    'Are my heated stairs on?',
+    'Open the garage',
+    'Set bedroom to 72 degrees',
+    'Play Bohemian Rhapsody',
   ];
 
   const handleSuggestionClick = (suggestion: string): void => {
@@ -213,8 +219,8 @@ export default function ChatInterface() {
                 msg.role === 'user'
                   ? 'bg-blue-500 text-white'
                   : msg.role === 'tool'
-                  ? 'bg-yellow-100 text-yellow-900'
-                  : 'bg-gray-200 text-gray-900'
+                    ? 'bg-yellow-100 text-yellow-900'
+                    : 'bg-gray-200 text-gray-900'
               }`}
             >
               {msg.role === 'tool' ? (

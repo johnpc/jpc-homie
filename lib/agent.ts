@@ -34,12 +34,17 @@ Be proactive and action-oriented. Users prefer quick execution over lengthy expl
 class HomeAssistantClient {
   constructor(private config: { url: string; token: string }) {}
 
-  async callService(domain: string, service: string, data: { entity_id?: string; [key: string]: unknown }, returnResponse = false) {
+  async callService(
+    domain: string,
+    service: string,
+    data: { entity_id?: string; [key: string]: unknown },
+    returnResponse = false
+  ) {
     const url = `${this.config.url}/api/services/${domain}/${service}${returnResponse ? '?return_response=true' : ''}`;
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.config.token}`,
+        Authorization: `Bearer ${this.config.token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(data),
@@ -50,7 +55,7 @@ class HomeAssistantClient {
 
   async getStates() {
     const response = await fetch(`${this.config.url}/api/states`, {
-      headers: { 'Authorization': `Bearer ${this.config.token}` },
+      headers: { Authorization: `Bearer ${this.config.token}` },
     });
     if (!response.ok) throw new Error(`HA API error: ${response.statusText}`);
     return response.json();
@@ -58,7 +63,7 @@ class HomeAssistantClient {
 
   async getState(entityId: string) {
     const response = await fetch(`${this.config.url}/api/states/${entityId}`, {
-      headers: { 'Authorization': `Bearer ${this.config.token}` },
+      headers: { Authorization: `Bearer ${this.config.token}` },
     });
     if (!response.ok) throw new Error(`HA API error: ${response.statusText}`);
     return response.json();
@@ -69,9 +74,12 @@ function createTools(haClient: HomeAssistantClient) {
   return [
     tool({
       name: 'get_entity_state',
-      description: 'Get the current state of a Home Assistant entity (light, switch, sensor, etc). Returns the state and attributes.',
+      description:
+        'Get the current state of a Home Assistant entity (light, switch, sensor, etc). Returns the state and attributes.',
       inputSchema: z.object({
-        entity_id: z.string().describe('The entity ID (e.g., light.living_room, sensor.temperature)'),
+        entity_id: z
+          .string()
+          .describe('The entity ID (e.g., light.living_room, sensor.temperature)'),
       }),
       callback: async ({ entity_id }: { entity_id: string }) => {
         return JSON.stringify(await haClient.getState(entity_id));
@@ -115,7 +123,9 @@ function createTools(haClient: HomeAssistantClient) {
         brightness: z.number().min(0).max(255).describe('Brightness level (0-255)'),
       }),
       callback: async ({ entity_id, brightness }: { entity_id: string; brightness: number }) => {
-        return JSON.stringify(await haClient.callService('light', 'turn_on', { entity_id, brightness }));
+        return JSON.stringify(
+          await haClient.callService('light', 'turn_on', { entity_id, brightness })
+        );
       },
     }),
     tool({
@@ -126,12 +136,15 @@ function createTools(haClient: HomeAssistantClient) {
         temperature: z.number().describe('Target temperature'),
       }),
       callback: async ({ entity_id, temperature }: { entity_id: string; temperature: number }) => {
-        return JSON.stringify(await haClient.callService('climate', 'set_temperature', { entity_id, temperature }));
+        return JSON.stringify(
+          await haClient.callService('climate', 'set_temperature', { entity_id, temperature })
+        );
       },
     }),
     tool({
       name: 'activate_scene',
-      description: 'Activate a scene in Home Assistant. Scenes are pre-configured settings for multiple devices.',
+      description:
+        'Activate a scene in Home Assistant. Scenes are pre-configured settings for multiple devices.',
       inputSchema: z.object({
         entity_id: z.string().describe('The scene entity ID (e.g., scene.bedroom_red)'),
       }),
@@ -144,10 +157,34 @@ function createTools(haClient: HomeAssistantClient) {
       description: 'Control media player playback (play, pause, stop, next, previous, volume)',
       inputSchema: z.object({
         entity_id: z.string().describe('The media player entity ID'),
-        action: z.enum(['play', 'pause', 'stop', 'next_track', 'previous_track', 'volume_up', 'volume_down', 'volume_set']).describe('The action to perform'),
-        volume_level: z.number().min(0).max(1).optional().describe('Volume level (0.0-1.0) for volume_set action'),
+        action: z
+          .enum([
+            'play',
+            'pause',
+            'stop',
+            'next_track',
+            'previous_track',
+            'volume_up',
+            'volume_down',
+            'volume_set',
+          ])
+          .describe('The action to perform'),
+        volume_level: z
+          .number()
+          .min(0)
+          .max(1)
+          .optional()
+          .describe('Volume level (0.0-1.0) for volume_set action'),
       }),
-      callback: async ({ entity_id, action, volume_level }: { entity_id: string; action: string; volume_level?: number }) => {
+      callback: async ({
+        entity_id,
+        action,
+        volume_level,
+      }: {
+        entity_id: string;
+        action: string;
+        volume_level?: number;
+      }) => {
         const serviceMap: Record<string, string> = {
           play: 'media_play',
           pause: 'media_pause',
@@ -168,12 +205,22 @@ function createTools(haClient: HomeAssistantClient) {
     }),
     tool({
       name: 'search_music_assistant',
-      description: 'Search Music Assistant for artists, albums, tracks, or playlists. Returns results with URIs to play.',
+      description:
+        'Search Music Assistant for artists, albums, tracks, or playlists. Returns results with URIs to play.',
       inputSchema: z.object({
         search_name: z.string().describe('What to search for (e.g., "Queen", "Bohemian Rhapsody")'),
-        media_type: z.enum(['artist', 'album', 'track', 'playlist']).optional().describe('Type of media to search for'),
+        media_type: z
+          .enum(['artist', 'album', 'track', 'playlist'])
+          .optional()
+          .describe('Type of media to search for'),
       }),
-      callback: async ({ search_name, media_type }: { search_name: string; media_type?: string }) => {
+      callback: async ({
+        search_name,
+        media_type,
+      }: {
+        search_name: string;
+        media_type?: string;
+      }) => {
         const data: Record<string, unknown> = {
           config_entry_id: '01JFXB6AN0J9RS77J8523HVWCB',
           name: search_name,
@@ -187,20 +234,36 @@ function createTools(haClient: HomeAssistantClient) {
       name: 'play_music_assistant',
       description: 'Play music from Music Assistant using a URI from search results.',
       inputSchema: z.object({
-        entity_id: z.string().describe('The media player entity ID (e.g., media_player.living_room_sonos)'),
+        entity_id: z
+          .string()
+          .describe('The media player entity ID (e.g., media_player.living_room_sonos)'),
         uri: z.string().describe('The URI from search results (e.g., library://artist/698)'),
-        media_type: z.enum(['artist', 'album', 'track', 'playlist', 'radio']).describe('Type of media'),
+        media_type: z
+          .enum(['artist', 'album', 'track', 'playlist', 'radio'])
+          .describe('Type of media'),
       }),
-      callback: async ({ entity_id, uri, media_type }: { entity_id: string; uri: string; media_type: string }) => {
-        await haClient.callService('music_assistant', 'play_media', { entity_id, media_id: uri, media_type });
-        
-        await new Promise(resolve => setTimeout(resolve, 2000));
+      callback: async ({
+        entity_id,
+        uri,
+        media_type,
+      }: {
+        entity_id: string;
+        uri: string;
+        media_type: string;
+      }) => {
+        await haClient.callService('music_assistant', 'play_media', {
+          entity_id,
+          media_id: uri,
+          media_type,
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         const state = await haClient.getState(entity_id);
-        
+
         const title = (state.attributes?.media_title as string) || 'Unknown';
         const artist = (state.attributes?.media_artist as string) || 'Unknown';
         const album = (state.attributes?.media_album_name as string) || '';
-        
+
         return `Started playing ${media_type}. Current track: "${title}" by ${artist}${album ? ` (${album})` : ''}`;
       },
     }),

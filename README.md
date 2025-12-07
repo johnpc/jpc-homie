@@ -64,6 +64,7 @@ npm run dev
 - `HOME_ASSISTANT_TOKEN` - Long-lived access token from Home Assistant
 
 Get your token from Home Assistant:
+
 1. Go to Profile → Security → Long-Lived Access Tokens
 2. Click "Create Token"
 3. Copy the token
@@ -71,6 +72,7 @@ Get your token from Home Assistant:
 ## GitHub Actions Setup
 
 Images are automatically built and pushed to Docker Hub on:
+
 - Push to `main` branch → tagged as `main`
 - Version tags (e.g., `v1.0.0`) → tagged as `1.0.0` and `1.0`
 

@@ -16,25 +16,28 @@ const prompt = process.argv[2] || 'What devices are available?';
 console.log(`\n🏠 Homie\n`);
 console.log(`User: ${prompt}\n`);
 
-agent.invoke(prompt).then((result) => {
-  const lastMessage = result.lastMessage as
-    | string
-    | { content: Array<{ text?: string }> }
-    | { role: string; content: string };
+agent
+  .invoke(prompt)
+  .then((result) => {
+    const lastMessage = result.lastMessage as
+      | string
+      | { content: Array<{ text?: string }> }
+      | { role: string; content: string };
 
-  let messageText = '';
-  if (typeof lastMessage === 'string') {
-    messageText = lastMessage;
-  } else if ('content' in lastMessage && Array.isArray(lastMessage.content)) {
-    messageText = lastMessage.content.map((c) => c.text || '').join('');
-  } else if ('content' in lastMessage && typeof lastMessage.content === 'string') {
-    messageText = lastMessage.content;
-  } else {
-    messageText = JSON.stringify(lastMessage);
-  }
+    let messageText = '';
+    if (typeof lastMessage === 'string') {
+      messageText = lastMessage;
+    } else if ('content' in lastMessage && Array.isArray(lastMessage.content)) {
+      messageText = lastMessage.content.map((c) => c.text || '').join('');
+    } else if ('content' in lastMessage && typeof lastMessage.content === 'string') {
+      messageText = lastMessage.content;
+    } else {
+      messageText = JSON.stringify(lastMessage);
+    }
 
-  console.log(`\nAgent: ${messageText}\n`);
-}).catch((error: Error) => {
-  console.error('Error:', error.message);
-  process.exit(1);
-});
+    console.log(`\nAgent: ${messageText}\n`);
+  })
+  .catch((error: Error) => {
+    console.error('Error:', error.message);
+    process.exit(1);
+  });
