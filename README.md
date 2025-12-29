@@ -20,6 +20,10 @@ A conversational AI assistant for controlling your Home Assistant smart home dev
 cat > .env << EOF
 HOME_ASSISTANT_URL=https://your-home-assistant.duckdns.org
 HOME_ASSISTANT_TOKEN=your_long_lived_access_token
+JELLYFIN_URL=https://your-jellyfin-server.com
+JELLYFIN_API_KEY=your_jellyfin_api_key
+JELLYFIN_USERNAME=your_jellyfin_username
+JELLYFIN_PASSWORD=your_jellyfin_password
 EOF
 
 # Start the service
