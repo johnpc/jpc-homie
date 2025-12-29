@@ -38,7 +38,7 @@ class JellyfinService {
   private async fetch<T>(endpoint: string): Promise<T> {
     const response = await fetch(`${JELLYFIN_URL}${endpoint}`, {
       headers: {
-        'X-Emby-Token': JELLYFIN_API_KEY,
+        'X-Emby-Token': JELLYFIN_API_KEY || '',
       },
     });
     if (!response.ok) throw new Error('Jellyfin API error');

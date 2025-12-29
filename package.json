@@ -16,6 +16,9 @@
     "*.{ts,tsx}": [
       "eslint --fix",
       "prettier --write"
+    ],
+    "package.json": [
+      "bash -c 'npm run build'"
     ]
   },
   "dependencies": {
