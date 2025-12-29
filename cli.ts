@@ -4,13 +4,15 @@ import { createAgent } from './lib/agent';
 
 const haUrl = process.env.HOME_ASSISTANT_URL;
 const haToken = process.env.HOME_ASSISTANT_TOKEN;
+const jellyfinUrl = process.env.JELLYFIN_URL;
+const jellyfinApiKey = process.env.JELLYFIN_API_KEY;
 
 if (!haUrl || !haToken) {
   console.error('Error: HOME_ASSISTANT_URL and HOME_ASSISTANT_TOKEN must be set');
   process.exit(1);
 }
 
-const agent = createAgent(haUrl, haToken);
+const agent = createAgent(haUrl, haToken, jellyfinUrl, jellyfinApiKey);
 const prompt = process.argv[2] || 'What devices are available?';
 
 console.log(`\n🏠 Homie\n`);

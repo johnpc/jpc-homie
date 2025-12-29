@@ -16,19 +16,20 @@ Your capabilities:
 
 When users ask you to control devices:
 1. PREFER SCENES when available - they're faster and more efficient than controlling individual devices
-2. For music requests: Use play_music with the artist/album/track name and type. Music Assistant will handle the search automatically.
+2. For music requests: First use search_jellyfin to verify the track exists and get the exact name, then use play_music with a SHORT, SIMPLE search term (just the song title or artist name). Use media_player.living_room_sonos as the entity_id.
 3. For lock requests: Use get_all_states to find lock entities, then use control_lock to lock/unlock them
 4. Take immediate action when the intent is clear - don't ask for clarification unless absolutely necessary
 5. If multiple scene options exist (e.g., "bedroom bright" and "main floor bright"), activate the bedroom scene as it's most commonly used
-6. For music requests, use the Sonos media player (media_player.living_room_sonos)
-7. For volume changes: check current volume first, then use volume_set to make noticeable changes (increase/decrease by 0.2 or more)
-8. After taking action, briefly confirm what you did
-9. Only ask for clarification if the request is truly ambiguous or impossible to fulfill
+6. For volume changes: check current volume first, then use volume_set to make noticeable changes (increase/decrease by 0.2 or more)
+7. After taking action, briefly confirm what you did
+8. Only ask for clarification if the request is truly ambiguous or impossible to fulfill
 
 Be proactive and action-oriented. Users prefer quick execution over lengthy explanations.`;
 
 class HomeAssistantClient {
-  constructor(private config: { url: string; token: string }) {}
+  constructor(
+    private config: { url: string; token: string; jellyfinUrl?: string; jellyfinApiKey?: string }
+  ) {}
 
   async callService(
     domain: string,
@@ -200,16 +201,42 @@ function createTools(haClient: HomeAssistantClient) {
       },
     }),
     tool({
+      name: 'search_jellyfin',
+      description: 'Search Jellyfin library for tracks, artists, or albums to verify they exist.',
+      inputSchema: z.object({
+        query: z.string().describe('Search query'),
+        type: z.enum(['track', 'artist', 'album']).describe('Type to search for'),
+      }),
+      callback: async ({ query, type }: { query: string; type: string }) => {
+        if (!haClient.config.jellyfinUrl || !haClient.config.jellyfinApiKey) {
+          return JSON.stringify({ error: 'Jellyfin not configured' });
+        }
+        const itemType =
+          type === 'track' ? 'Audio' : type === 'artist' ? 'MusicArtist' : 'MusicAlbum';
+        const response = await fetch(
+          `${haClient.config.jellyfinUrl}/Items?searchTerm=${encodeURIComponent(query)}&IncludeItemTypes=${itemType}&Recursive=true`,
+          { headers: { 'X-Emby-Token': haClient.config.jellyfinApiKey } }
+        );
+        const data = await response.json();
+        return JSON.stringify(
+          data.Items?.map((i: { Name: string; Artists?: string[] }) => ({
+            name: i.Name,
+            artist: i.Artists?.[0],
+          })) || []
+        );
+      },
+    }),
+    tool({
       name: 'play_music',
       description:
-        'Play music via Music Assistant. Supports artists, albums, tracks, playlists. Just provide the name and type.',
+        'Play music via Music Assistant. Use simple, short search terms for best results.',
       inputSchema: z.object({
         entity_id: z
           .string()
           .describe('The media player entity ID (e.g., media_player.living_room_sonos)'),
         media_content_id: z
           .string()
-          .describe('What to play (e.g., "Queen", "Bohemian Rhapsody", "Greatest Hits")'),
+          .describe('Short search term (e.g., "sweet", "queen") - keep it simple'),
         media_content_type: z
           .enum(['artist', 'album', 'track', 'playlist'])
           .describe('Type of media to play'),
@@ -253,8 +280,18 @@ function createTools(haClient: HomeAssistantClient) {
   ];
 }
 
-export function createAgent(haUrl: string, haToken: string) {
-  const haClient = new HomeAssistantClient({ url: haUrl, token: haToken });
+export function createAgent(
+  haUrl: string,
+  haToken: string,
+  jellyfinUrl?: string,
+  jellyfinApiKey?: string
+) {
+  const haClient = new HomeAssistantClient({
+    url: haUrl,
+    token: haToken,
+    jellyfinUrl,
+    jellyfinApiKey,
+  });
   const tools = createTools(haClient);
 
   return new Agent({

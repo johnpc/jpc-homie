@@ -19,12 +19,14 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     const haUrl = process.env.HOME_ASSISTANT_URL;
     const haToken = process.env.HOME_ASSISTANT_TOKEN;
+    const jellyfinUrl = process.env.JELLYFIN_URL;
+    const jellyfinApiKey = process.env.JELLYFIN_API_KEY;
 
     if (!haUrl || !haToken) {
       return Response.json({ error: 'Home Assistant not configured' }, { status: 500 });
     }
 
-    const agent = createAgent(haUrl, haToken);
+    const agent = createAgent(haUrl, haToken, jellyfinUrl, jellyfinApiKey);
 
     // Build conversation context
     let conversationContext = '';
