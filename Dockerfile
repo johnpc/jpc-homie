@@ -14,6 +14,14 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Accept build args for Next.js public env vars
+ARG NEXT_PUBLIC_JELLYFIN_URL
+ARG NEXT_PUBLIC_JELLYFIN_API_KEY
+
+# Make them available during build
+ENV NEXT_PUBLIC_JELLYFIN_URL=$NEXT_PUBLIC_JELLYFIN_URL
+ENV NEXT_PUBLIC_JELLYFIN_API_KEY=$NEXT_PUBLIC_JELLYFIN_API_KEY
+
 RUN npm run build
 
 # Production image, copy all the files and run next
