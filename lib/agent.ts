@@ -276,6 +276,53 @@ function createTools(haClient: HomeAssistantClient) {
       },
     }),
     tool({
+      name: 'manage_queue',
+      description:
+        'View and manage the music playback queue. Can view current queue, clear queue, or skip tracks.',
+      inputSchema: z.object({
+        entity_id: z
+          .string()
+          .describe('The media player entity ID (e.g., media_player.living_room_sonos)'),
+        action: z
+          .enum(['view', 'clear', 'skip_next', 'skip_previous'])
+          .describe('Action to perform on the queue'),
+      }),
+      callback: async ({ entity_id, action }: { entity_id: string; action: string }) => {
+        if (action === 'view') {
+          const state = await haClient.getState(entity_id);
+          const queue = state.attributes?.queue_position || 0;
+          const queueSize = state.attributes?.queue_size || 0;
+          const currentTrack = state.attributes?.media_title || 'Unknown';
+          const currentArtist = state.attributes?.media_artist || 'Unknown';
+
+          return JSON.stringify({
+            current_position: queue,
+            queue_size: queueSize,
+            current_track: `${currentTrack} by ${currentArtist}`,
+            message: `Playing track ${queue + 1} of ${queueSize}`,
+          });
+        } else if (action === 'clear') {
+          await haClient.callService('media_player', 'clear_playlist', { entity_id });
+          return JSON.stringify({ message: 'Queue cleared' });
+        } else if (action === 'skip_next') {
+          await haClient.callService('media_player', 'media_next_track', { entity_id });
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          const state = await haClient.getState(entity_id);
+          const title = state.attributes?.media_title || 'Unknown';
+          const artist = state.attributes?.media_artist || 'Unknown';
+          return JSON.stringify({ message: `Skipped to: ${title} by ${artist}` });
+        } else if (action === 'skip_previous') {
+          await haClient.callService('media_player', 'media_previous_track', { entity_id });
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          const state = await haClient.getState(entity_id);
+          const title = state.attributes?.media_title || 'Unknown';
+          const artist = state.attributes?.media_artist || 'Unknown';
+          return JSON.stringify({ message: `Went back to: ${title} by ${artist}` });
+        }
+        return JSON.stringify({ error: 'Invalid action' });
+      },
+    }),
+    tool({
       name: 'play_music',
       description:
         'Play music via Music Assistant. Use simple, short search terms for best results.',
