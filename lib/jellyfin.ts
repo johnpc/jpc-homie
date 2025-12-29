@@ -7,6 +7,13 @@ export interface JellyfinArtist {
   Type: string;
 }
 
+export interface JellyfinAlbum {
+  Id: string;
+  Name: string;
+  AlbumArtist?: string;
+  Type: string;
+}
+
 export interface JellyfinTrack {
   Id: string;
   Name: string;
@@ -19,6 +26,12 @@ export interface JellyfinPlaylist {
   Id: string;
   Name: string;
   Type: string;
+}
+
+export interface SearchResults {
+  artists: JellyfinArtist[];
+  albums: JellyfinAlbum[];
+  tracks: JellyfinTrack[];
 }
 
 class JellyfinService {
@@ -48,6 +61,33 @@ class JellyfinService {
   async searchTracks(searchTerm: string): Promise<JellyfinTrack[]> {
     const data = await this.fetch<{ Items: JellyfinTrack[] }>(
       `/Items?searchTerm=${encodeURIComponent(searchTerm)}&IncludeItemTypes=Audio&Recursive=true&Limit=50`
+    );
+    return data.Items || [];
+  }
+
+  async searchAll(searchTerm: string): Promise<SearchResults> {
+    const [artistsData, albumsData, tracksData] = await Promise.all([
+      this.fetch<{ Items: JellyfinArtist[] }>(
+        `/Artists?searchTerm=${encodeURIComponent(searchTerm)}&Limit=20`
+      ),
+      this.fetch<{ Items: JellyfinAlbum[] }>(
+        `/Items?searchTerm=${encodeURIComponent(searchTerm)}&IncludeItemTypes=MusicAlbum&Recursive=true&Limit=20`
+      ),
+      this.fetch<{ Items: JellyfinTrack[] }>(
+        `/Items?searchTerm=${encodeURIComponent(searchTerm)}&IncludeItemTypes=Audio&Recursive=true&Limit=30`
+      ),
+    ]);
+
+    return {
+      artists: artistsData.Items || [],
+      albums: albumsData.Items || [],
+      tracks: tracksData.Items || [],
+    };
+  }
+
+  async getAlbumTracks(albumId: string): Promise<JellyfinTrack[]> {
+    const data = await this.fetch<{ Items: JellyfinTrack[] }>(
+      `/Items?ParentId=${albumId}&IncludeItemTypes=Audio&Recursive=true`
     );
     return data.Items || [];
   }
