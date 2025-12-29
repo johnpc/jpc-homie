@@ -27,9 +27,16 @@ When users ask you to control devices:
 Be proactive and action-oriented. Users prefer quick execution over lengthy explanations.`;
 
 class HomeAssistantClient {
-  constructor(
-    private config: { url: string; token: string; jellyfinUrl?: string; jellyfinApiKey?: string }
-  ) {}
+  public config: { url: string; token: string; jellyfinUrl?: string; jellyfinApiKey?: string };
+
+  constructor(config: {
+    url: string;
+    token: string;
+    jellyfinUrl?: string;
+    jellyfinApiKey?: string;
+  }) {
+    this.config = config;
+  }
 
   async callService(
     domain: string,
