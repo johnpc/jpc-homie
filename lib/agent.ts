@@ -210,15 +210,21 @@ function createTools(haClient: HomeAssistantClient) {
     tool({
       name: 'search_jellyfin',
       description:
-        'Search Jellyfin library for tracks, artists, or albums. Returns detailed results including track lists for artists.',
+        'Search Jellyfin library for tracks, artists, or albums. Returns detailed results including full track lists for artists.',
       inputSchema: z.object({
-        query: z.string().describe('Search query'),
+        query: z.string().describe('Search query (artist name, song title, or album name)'),
         type: z.enum(['track', 'artist', 'album']).describe('Type to search for'),
+        limit: z
+          .number()
+          .optional()
+          .describe('Maximum number of results to return (default: 20, max: 100)'),
       }),
-      callback: async ({ query, type }: { query: string; type: string }) => {
+      callback: async ({ query, type, limit }: { query: string; type: string; limit?: number }) => {
         if (!haClient.config.jellyfinUrl || !haClient.config.jellyfinApiKey) {
           return JSON.stringify({ error: 'Jellyfin not configured' });
         }
+
+        const maxResults = Math.min(limit || 20, 100);
 
         if (type === 'artist') {
           // First find the artist
@@ -232,12 +238,15 @@ function createTools(haClient: HomeAssistantClient) {
           );
 
           if (!artist) {
-            return JSON.stringify({ found: false, message: 'Artist not found' });
+            return JSON.stringify({
+              found: false,
+              message: `Artist "${query}" not found in library`,
+            });
           }
 
-          // Get tracks by this artist
+          // Get ALL tracks by this artist
           const tracksResponse = await fetch(
-            `${haClient.config.jellyfinUrl}/Items?ArtistIds=${artist.Id}&IncludeItemTypes=Audio&Recursive=true`,
+            `${haClient.config.jellyfinUrl}/Items?ArtistIds=${artist.Id}&IncludeItemTypes=Audio&Recursive=true&Limit=${maxResults}`,
             { headers: { 'X-Emby-Token': haClient.config.jellyfinApiKey } }
           );
           const tracksData = await tracksResponse.json();
@@ -246,11 +255,15 @@ function createTools(haClient: HomeAssistantClient) {
             found: true,
             artist: artist.Name,
             trackCount: tracksData.TotalRecordCount || 0,
+            showing: tracksData.Items?.length || 0,
             tracks:
-              tracksData.Items?.slice(0, 20).map((i: { Name: string; Album?: string }) => ({
-                name: i.Name,
-                album: i.Album,
-              })) || [],
+              tracksData.Items?.map(
+                (i: { Name: string; Album?: string; IndexNumber?: number }) => ({
+                  name: i.Name,
+                  album: i.Album,
+                  trackNumber: i.IndexNumber,
+                })
+              ) || [],
           });
         }
 
@@ -258,20 +271,26 @@ function createTools(haClient: HomeAssistantClient) {
         const itemType =
           type === 'track' ? 'Audio' : type === 'artist' ? 'MusicArtist' : 'MusicAlbum';
         const response = await fetch(
-          `${haClient.config.jellyfinUrl}/Items?searchTerm=${encodeURIComponent(query)}&IncludeItemTypes=${itemType}&Recursive=true&Limit=20`,
+          `${haClient.config.jellyfinUrl}/Items?searchTerm=${encodeURIComponent(query)}&IncludeItemTypes=${itemType}&Recursive=true&Limit=${maxResults}`,
           { headers: { 'X-Emby-Token': haClient.config.jellyfinApiKey } }
         );
         const data = await response.json();
 
+        const results =
+          data.Items?.map((i: { Name: string; Artists?: string[]; Album?: string }) => ({
+            name: i.Name,
+            artist: i.Artists?.[0],
+            album: i.Album,
+          })) || [];
+
         return JSON.stringify({
-          found: (data.Items?.length || 0) > 0,
+          found: results.length > 0,
           count: data.TotalRecordCount || 0,
-          results:
-            data.Items?.map((i: { Name: string; Artists?: string[]; Album?: string }) => ({
-              name: i.Name,
-              artist: i.Artists?.[0],
-              album: i.Album,
-            })) || [],
+          showing: results.length,
+          query: query,
+          type: type,
+          results: results,
+          message: results.length === 0 ? `No ${type}s found matching "${query}"` : undefined,
         });
       },
     }),
