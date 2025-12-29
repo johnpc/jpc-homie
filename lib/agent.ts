@@ -209,7 +209,8 @@ function createTools(haClient: HomeAssistantClient) {
     }),
     tool({
       name: 'search_jellyfin',
-      description: 'Search Jellyfin library for tracks, artists, or albums to verify they exist.',
+      description:
+        'Search Jellyfin library for tracks, artists, or albums. Returns detailed results including track lists for artists.',
       inputSchema: z.object({
         query: z.string().describe('Search query'),
         type: z.enum(['track', 'artist', 'album']).describe('Type to search for'),
@@ -218,19 +219,60 @@ function createTools(haClient: HomeAssistantClient) {
         if (!haClient.config.jellyfinUrl || !haClient.config.jellyfinApiKey) {
           return JSON.stringify({ error: 'Jellyfin not configured' });
         }
+
+        if (type === 'artist') {
+          // First find the artist
+          const artistResponse = await fetch(
+            `${haClient.config.jellyfinUrl}/Artists?searchTerm=${encodeURIComponent(query)}`,
+            { headers: { 'X-Emby-Token': haClient.config.jellyfinApiKey } }
+          );
+          const artistData = await artistResponse.json();
+          const artist = artistData.Items?.find((i: { Name: string }) =>
+            i.Name.toLowerCase().includes(query.toLowerCase())
+          );
+
+          if (!artist) {
+            return JSON.stringify({ found: false, message: 'Artist not found' });
+          }
+
+          // Get tracks by this artist
+          const tracksResponse = await fetch(
+            `${haClient.config.jellyfinUrl}/Items?ArtistIds=${artist.Id}&IncludeItemTypes=Audio&Recursive=true`,
+            { headers: { 'X-Emby-Token': haClient.config.jellyfinApiKey } }
+          );
+          const tracksData = await tracksResponse.json();
+
+          return JSON.stringify({
+            found: true,
+            artist: artist.Name,
+            trackCount: tracksData.TotalRecordCount || 0,
+            tracks:
+              tracksData.Items?.slice(0, 20).map((i: { Name: string; Album?: string }) => ({
+                name: i.Name,
+                album: i.Album,
+              })) || [],
+          });
+        }
+
+        // For tracks and albums, use simple search
         const itemType =
           type === 'track' ? 'Audio' : type === 'artist' ? 'MusicArtist' : 'MusicAlbum';
         const response = await fetch(
-          `${haClient.config.jellyfinUrl}/Items?searchTerm=${encodeURIComponent(query)}&IncludeItemTypes=${itemType}&Recursive=true`,
+          `${haClient.config.jellyfinUrl}/Items?searchTerm=${encodeURIComponent(query)}&IncludeItemTypes=${itemType}&Recursive=true&Limit=20`,
           { headers: { 'X-Emby-Token': haClient.config.jellyfinApiKey } }
         );
         const data = await response.json();
-        return JSON.stringify(
-          data.Items?.map((i: { Name: string; Artists?: string[] }) => ({
-            name: i.Name,
-            artist: i.Artists?.[0],
-          })) || []
-        );
+
+        return JSON.stringify({
+          found: (data.Items?.length || 0) > 0,
+          count: data.TotalRecordCount || 0,
+          results:
+            data.Items?.map((i: { Name: string; Artists?: string[]; Album?: string }) => ({
+              name: i.Name,
+              artist: i.Artists?.[0],
+              album: i.Album,
+            })) || [],
+        });
       },
     }),
     tool({
