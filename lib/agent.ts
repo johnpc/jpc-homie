@@ -278,16 +278,34 @@ function createTools(haClient: HomeAssistantClient) {
     tool({
       name: 'manage_queue',
       description:
-        'View and manage the music playback queue. Can view current queue, clear queue, or skip tracks.',
+        'View and manage the music playback queue. Can view, add songs, clear queue, or skip tracks.',
       inputSchema: z.object({
         entity_id: z
           .string()
           .describe('The media player entity ID (e.g., media_player.living_room_sonos)'),
         action: z
-          .enum(['view', 'clear', 'skip_next', 'skip_previous'])
+          .enum(['view', 'add', 'clear', 'skip_next', 'skip_previous'])
           .describe('Action to perform on the queue'),
+        media_content_id: z
+          .string()
+          .optional()
+          .describe('Song/artist/album to add (required for add action)'),
+        media_content_type: z
+          .enum(['artist', 'album', 'track', 'playlist'])
+          .optional()
+          .describe('Type of media to add (required for add action)'),
       }),
-      callback: async ({ entity_id, action }: { entity_id: string; action: string }) => {
+      callback: async ({
+        entity_id,
+        action,
+        media_content_id,
+        media_content_type,
+      }: {
+        entity_id: string;
+        action: string;
+        media_content_id?: string;
+        media_content_type?: string;
+      }) => {
         if (action === 'view') {
           const state = await haClient.getState(entity_id);
           const queue = state.attributes?.queue_position || 0;
@@ -301,6 +319,19 @@ function createTools(haClient: HomeAssistantClient) {
             current_track: `${currentTrack} by ${currentArtist}`,
             message: `Playing track ${queue + 1} of ${queueSize}`,
           });
+        } else if (action === 'add') {
+          if (!media_content_id || !media_content_type) {
+            return JSON.stringify({
+              error: 'media_content_id and media_content_type required for add action',
+            });
+          }
+          await haClient.callService('media_player', 'play_media', {
+            entity_id,
+            media_content_id,
+            media_content_type,
+            enqueue: 'add',
+          });
+          return JSON.stringify({ message: `Added ${media_content_id} to queue` });
         } else if (action === 'clear') {
           await haClient.callService('media_player', 'clear_playlist', { entity_id });
           return JSON.stringify({ message: 'Queue cleared' });
