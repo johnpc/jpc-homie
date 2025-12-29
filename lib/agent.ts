@@ -276,6 +276,122 @@ function createTools(haClient: HomeAssistantClient) {
       },
     }),
     tool({
+      name: 'enhanced_music_search',
+      description:
+        'Advanced music search features: find similar music, search by genre/mood, or view recently played tracks.',
+      inputSchema: z.object({
+        action: z
+          .enum(['similar', 'genre', 'recently_played'])
+          .describe('Type of search to perform'),
+        query: z
+          .string()
+          .optional()
+          .describe('Genre/mood to search for (required for genre action)'),
+        entity_id: z
+          .string()
+          .optional()
+          .describe('Media player entity ID (required for similar and recently_played actions)'),
+      }),
+      callback: async ({
+        action,
+        query,
+        entity_id,
+      }: {
+        action: string;
+        query?: string;
+        entity_id?: string;
+      }) => {
+        if (!haClient.config.jellyfinUrl || !haClient.config.jellyfinApiKey) {
+          return JSON.stringify({ error: 'Jellyfin not configured' });
+        }
+
+        if (action === 'similar') {
+          if (!entity_id) {
+            return JSON.stringify({ error: 'entity_id required for similar action' });
+          }
+          // Get current playing track
+          const state = await haClient.getState(entity_id);
+          const currentArtist = state.attributes?.media_artist;
+          const currentGenre = state.attributes?.media_genre;
+
+          if (!currentArtist) {
+            return JSON.stringify({ error: 'No track currently playing' });
+          }
+
+          // Search for tracks by same artist or genre
+          const response = await fetch(
+            `${haClient.config.jellyfinUrl}/Items?Artists=${encodeURIComponent(currentArtist)}&IncludeItemTypes=Audio&Recursive=true&Limit=20`,
+            { headers: { 'X-Emby-Token': haClient.config.jellyfinApiKey } }
+          );
+          const data = await response.json();
+
+          return JSON.stringify({
+            current_track: state.attributes?.media_title,
+            current_artist: currentArtist,
+            similar_tracks:
+              data.Items?.slice(0, 10).map((i: { Name: string; Album?: string }) => ({
+                name: i.Name,
+                album: i.Album,
+              })) || [],
+          });
+        } else if (action === 'genre') {
+          if (!query) {
+            return JSON.stringify({ error: 'query required for genre action' });
+          }
+
+          // Search by genre in track names or artist names
+          const response = await fetch(
+            `${haClient.config.jellyfinUrl}/Items?searchTerm=${encodeURIComponent(query)}&IncludeItemTypes=Audio&Recursive=true&Limit=30`,
+            { headers: { 'X-Emby-Token': haClient.config.jellyfinApiKey } }
+          );
+          const data = await response.json();
+
+          return JSON.stringify({
+            genre: query,
+            found: (data.Items?.length || 0) > 0,
+            tracks:
+              data.Items?.slice(0, 15).map(
+                (i: { Name: string; Artists?: string[]; Album?: string }) => ({
+                  name: i.Name,
+                  artist: i.Artists?.[0],
+                  album: i.Album,
+                })
+              ) || [],
+          });
+        } else if (action === 'recently_played') {
+          if (!entity_id) {
+            return JSON.stringify({ error: 'entity_id required for recently_played action' });
+          }
+
+          // Get recently played from Jellyfin
+          const response = await fetch(
+            `${haClient.config.jellyfinUrl}/Users/2fee110568a441a1b148020b5843d5c9/Items?SortBy=DatePlayed&SortOrder=Descending&IncludeItemTypes=Audio&Limit=20&Recursive=true&Filters=IsPlayed`,
+            { headers: { 'X-Emby-Token': haClient.config.jellyfinApiKey } }
+          );
+          const data = await response.json();
+
+          return JSON.stringify({
+            recently_played:
+              data.Items?.map(
+                (i: {
+                  Name: string;
+                  Artists?: string[];
+                  Album?: string;
+                  UserData?: { LastPlayedDate?: string };
+                }) => ({
+                  name: i.Name,
+                  artist: i.Artists?.[0],
+                  album: i.Album,
+                  last_played: i.UserData?.LastPlayedDate,
+                })
+              ) || [],
+          });
+        }
+
+        return JSON.stringify({ error: 'Invalid action' });
+      },
+    }),
+    tool({
       name: 'manage_queue',
       description:
         'View and manage the music playback queue. Can view, add songs, clear queue, or skip tracks.',
