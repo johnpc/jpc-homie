@@ -10,17 +10,13 @@ Your capabilities:
 - Adjust thermostats and climate devices
 - Activate scenes (PREFERRED for multi-device control)
 - Control media players (play music, adjust volume, pause/play/stop)
-- Search and play music via Music Assistant (REQUIRED: search first, then play with URI)
+- Play music via Music Assistant (artists, albums, tracks, playlists)
 - Control door locks (lock/unlock)
 - Query device states and discover available devices
 
 When users ask you to control devices:
 1. PREFER SCENES when available - they're faster and more efficient than controlling individual devices
-2. For music requests: ALWAYS use this workflow:
-   a. Use search_music_assistant to find the artist/album/track
-   b. Extract the "uri" field from the search results
-   c. Use play_music_assistant with that uri
-   d. Include the exact "Current track" information from the play_music_assistant tool response
+2. For music requests: Use play_music with the artist/album/track name and type. Music Assistant will handle the search automatically.
 3. For lock requests: Use get_all_states to find lock entities, then use control_lock to lock/unlock them
 4. Take immediate action when the intent is clear - don't ask for clarification unless absolutely necessary
 5. If multiple scene options exist (e.g., "bedroom bright" and "main floor bright"), activate the bedroom scene as it's most commonly used
@@ -204,57 +200,33 @@ function createTools(haClient: HomeAssistantClient) {
       },
     }),
     tool({
-      name: 'search_music_assistant',
+      name: 'play_music',
       description:
-        'Search Music Assistant for artists, albums, tracks, or playlists. Returns results with URIs to play.',
-      inputSchema: z.object({
-        search_name: z.string().describe('What to search for (e.g., "Queen", "Bohemian Rhapsody")'),
-        media_type: z
-          .enum(['artist', 'album', 'track', 'playlist'])
-          .optional()
-          .describe('Type of media to search for'),
-      }),
-      callback: async ({
-        search_name,
-        media_type,
-      }: {
-        search_name: string;
-        media_type?: string;
-      }) => {
-        const data: Record<string, unknown> = {
-          config_entry_id: '01JFXB6AN0J9RS77J8523HVWCB',
-          name: search_name,
-          limit: 5,
-        };
-        if (media_type) data.media_type = [media_type];
-        return JSON.stringify(await haClient.callService('music_assistant', 'search', data, true));
-      },
-    }),
-    tool({
-      name: 'play_music_assistant',
-      description: 'Play music from Music Assistant using a URI from search results.',
+        'Play music via Music Assistant. Supports artists, albums, tracks, playlists. Just provide the name and type.',
       inputSchema: z.object({
         entity_id: z
           .string()
           .describe('The media player entity ID (e.g., media_player.living_room_sonos)'),
-        uri: z.string().describe('The URI from search results (e.g., library://artist/698)'),
-        media_type: z
-          .enum(['artist', 'album', 'track', 'playlist', 'radio'])
-          .describe('Type of media'),
+        media_content_id: z
+          .string()
+          .describe('What to play (e.g., "Queen", "Bohemian Rhapsody", "Greatest Hits")'),
+        media_content_type: z
+          .enum(['artist', 'album', 'track', 'playlist'])
+          .describe('Type of media to play'),
       }),
       callback: async ({
         entity_id,
-        uri,
-        media_type,
+        media_content_id,
+        media_content_type,
       }: {
         entity_id: string;
-        uri: string;
-        media_type: string;
+        media_content_id: string;
+        media_content_type: string;
       }) => {
-        await haClient.callService('music_assistant', 'play_media', {
+        await haClient.callService('media_player', 'play_media', {
           entity_id,
-          media_id: uri,
-          media_type,
+          media_content_id,
+          media_content_type,
         });
 
         await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -264,7 +236,7 @@ function createTools(haClient: HomeAssistantClient) {
         const artist = (state.attributes?.media_artist as string) || 'Unknown';
         const album = (state.attributes?.media_album_name as string) || '';
 
-        return `Started playing ${media_type}. Current track: "${title}" by ${artist}${album ? ` (${album})` : ''}`;
+        return `Started playing. Current track: "${title}" by ${artist}${album ? ` (${album})` : ''}`;
       },
     }),
     tool({
