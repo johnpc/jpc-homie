@@ -6,10 +6,15 @@ export default function Temperature() {
   const [data, setData] = useState<{
     currentTemp: number;
     targetTemp: number;
+    targetLow: number;
+    targetHigh: number;
     mode: string;
     heating: boolean;
   } | null>(null);
   const [targetValue, setTargetValue] = useState(72);
+  const [lowTemp, setLowTemp] = useState(68);
+  const [highTemp, setHighTemp] = useState(74);
+  const [mode, setMode] = useState('heat');
   const [scale, setScale] = useState<'F' | 'C'>('F');
   const [loading, setLoading] = useState(false);
 
@@ -17,47 +22,49 @@ export default function Temperature() {
     const res = await fetch('/api/temperature');
     const json = await res.json();
     setData(json);
+    // Map 'range' mode to 'heat-cool' for the UI
+    setMode(json.mode === 'range' ? 'heat-cool' : json.mode);
     if (json.targetTemp) {
       setTargetValue(
         scale === 'F' ? Math.round((json.targetTemp * 9) / 5 + 32) : Math.round(json.targetTemp)
+      );
+    }
+    if (json.targetLow && json.targetHigh) {
+      setLowTemp(
+        scale === 'F' ? Math.round((json.targetLow * 9) / 5 + 32) : Math.round(json.targetLow)
+      );
+      setHighTemp(
+        scale === 'F' ? Math.round((json.targetHigh * 9) / 5 + 32) : Math.round(json.targetHigh)
       );
     }
   };
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
   }, []);
 
   const setTemp = async () => {
     setLoading(true);
-    const expectedTarget = targetValue;
 
-    await fetch('/api/temperature', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ value: targetValue, mode: data?.mode || 'heat', scale }),
-    });
+    if (mode === 'heat-cool') {
+      await fetch('/api/temperature/range', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ low: lowTemp, high: highTemp, mode, scale }),
+      });
+    } else {
+      await fetch('/api/temperature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: targetValue, mode, scale }),
+      });
+    }
 
-    // Poll for update with 30s timeout
-    const startTime = Date.now();
-    const pollInterval = setInterval(async () => {
-      const res = await fetch('/api/temperature');
-      const json = await res.json();
-      const currentTarget =
-        scale === 'F' ? Math.round((json.targetTemp * 9) / 5 + 32) : Math.round(json.targetTemp);
-
-      if (currentTarget === expectedTarget) {
-        setData(json);
-        setLoading(false);
-        clearInterval(pollInterval);
-      } else if (Date.now() - startTime > 30000) {
-        alert('Timeout: Temperature update failed');
-        setLoading(false);
-        clearInterval(pollInterval);
-      }
-    }, 1000);
+    // Wait 10 seconds then refresh
+    setTimeout(async () => {
+      await fetchData();
+      setLoading(false);
+    }, 10000);
   };
 
   if (!data) return <div className="text-center py-8">Loading...</div>;
@@ -66,6 +73,10 @@ export default function Temperature() {
   const currentF = Math.round((data.currentTemp * 9) / 5 + 32);
   const targetC = Math.round(data.targetTemp);
   const targetF = Math.round((data.targetTemp * 9) / 5 + 32);
+  const lowC = Math.round(data.targetLow);
+  const lowF = Math.round((data.targetLow * 9) / 5 + 32);
+  const highC = Math.round(data.targetHigh);
+  const highF = Math.round((data.targetHigh * 9) / 5 + 32);
 
   return (
     <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
@@ -82,7 +93,9 @@ export default function Temperature() {
         <div className="flex justify-between mb-2">
           <span className="text-gray-700">Target:</span>
           <span className="font-semibold">
-            {scale === 'F' ? targetF : targetC}°{scale}
+            {data.mode === 'range'
+              ? `${scale === 'F' ? lowF : lowC}-${scale === 'F' ? highF : highC}°${scale}`
+              : `${scale === 'F' ? targetF : targetC}°${scale}`}
           </span>
         </div>
         <div className="flex justify-between mb-2">
@@ -99,34 +112,99 @@ export default function Temperature() {
 
       <div className="mb-4">
         <label className="block text-gray-700 mb-2">Set Temperature</label>
-        <div className="flex gap-2 mb-2">
-          <input
-            type="text"
-            inputMode="numeric"
-            value={targetValue}
-            onChange={(e) => {
-              const val = e.target.value.replace(/[^0-9]/g, '');
-              if (val === '' || (parseInt(val) >= 0 && parseInt(val) <= 100)) {
-                setTargetValue(val === '' ? 0 : parseInt(val));
-              }
-            }}
-            className="flex-1 px-4 py-2 border rounded-lg"
-          />
+        {mode === 'heat-cool' || mode === 'range' ? (
+          <div className="space-y-2 mb-2">
+            <div className="flex gap-2 items-center">
+              <span className="text-sm text-gray-600 w-12">Low:</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={lowTemp}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9]/g, '');
+                  if (val === '' || (parseInt(val) >= 0 && parseInt(val) <= 100)) {
+                    setLowTemp(val === '' ? 0 : parseInt(val));
+                  }
+                }}
+                className="flex-1 px-4 py-2 border rounded-lg"
+              />
+            </div>
+            <div className="flex gap-2 items-center">
+              <span className="text-sm text-gray-600 w-12">High:</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={highTemp}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9]/g, '');
+                  if (val === '' || (parseInt(val) >= 0 && parseInt(val) <= 100)) {
+                    setHighTemp(val === '' ? 0 : parseInt(val));
+                  }
+                }}
+                className="flex-1 px-4 py-2 border rounded-lg"
+              />
+            </div>
+            <select
+              value={scale}
+              onChange={(e) => {
+                const newScale = e.target.value as 'F' | 'C';
+                setScale(newScale);
+                if (newScale === 'F') {
+                  setLowTemp(Math.round((data.targetTemp * 9) / 5 + 32) - 3);
+                  setHighTemp(Math.round((data.targetTemp * 9) / 5 + 32) + 3);
+                } else {
+                  setLowTemp(Math.round(data.targetTemp) - 2);
+                  setHighTemp(Math.round(data.targetTemp) + 2);
+                }
+              }}
+              className="w-full px-4 py-2 border rounded-lg"
+            >
+              <option value="F">°F</option>
+              <option value="C">°C</option>
+            </select>
+          </div>
+        ) : (
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={targetValue}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9]/g, '');
+                if (val === '' || (parseInt(val) >= 0 && parseInt(val) <= 100)) {
+                  setTargetValue(val === '' ? 0 : parseInt(val));
+                }
+              }}
+              className="flex-1 px-4 py-2 border rounded-lg"
+            />
+            <select
+              value={scale}
+              onChange={(e) => {
+                const newScale = e.target.value as 'F' | 'C';
+                setScale(newScale);
+                setTargetValue(
+                  newScale === 'F'
+                    ? Math.round((data.targetTemp * 9) / 5 + 32)
+                    : Math.round(data.targetTemp)
+                );
+              }}
+              className="px-4 py-2 border rounded-lg"
+            >
+              <option value="F">°F</option>
+              <option value="C">°C</option>
+            </select>
+          </div>
+        )}
+        <div className="mb-2">
           <select
-            value={scale}
-            onChange={(e) => {
-              const newScale = e.target.value as 'F' | 'C';
-              setScale(newScale);
-              setTargetValue(
-                newScale === 'F'
-                  ? Math.round((data.targetTemp * 9) / 5 + 32)
-                  : Math.round(data.targetTemp)
-              );
-            }}
-            className="px-4 py-2 border rounded-lg"
+            value={mode}
+            onChange={(e) => setMode(e.target.value)}
+            className="w-full px-4 py-2 border rounded-lg"
           >
-            <option value="F">°F</option>
-            <option value="C">°C</option>
+            <option value="heat">Heat</option>
+            <option value="cool">Cool</option>
+            <option value="heat-cool">Heat/Cool</option>
+            <option value="off">Off</option>
           </select>
         </div>
         <button
