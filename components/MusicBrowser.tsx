@@ -10,6 +10,8 @@ interface NowPlaying {
   artist?: string;
   album?: string;
   volume?: number;
+  position?: number;
+  duration?: number;
 }
 
 export default function MusicBrowser() {
@@ -24,6 +26,7 @@ export default function MusicBrowser() {
     albums: true,
     tracks: true,
   });
+  const [localPosition, setLocalPosition] = useState(0);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -40,6 +43,26 @@ export default function MusicBrowser() {
     },
     refetchInterval: 5000,
   });
+
+  // Update local position when nowPlaying changes
+  useEffect(() => {
+    if (nowPlaying?.position !== undefined) {
+      setLocalPosition(nowPlaying.position);
+    }
+  }, [nowPlaying?.position]);
+
+  // Increment local position every second when playing
+  useEffect(() => {
+    if (nowPlaying?.state === 'playing') {
+      const interval = setInterval(() => {
+        setLocalPosition((prev) => {
+          const next = prev + 1;
+          return nowPlaying.duration && next > nowPlaying.duration ? prev : next;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [nowPlaying?.state, nowPlaying?.duration]);
 
   const { data: artists, isLoading: artistsLoading } = useQuery({
     queryKey: ['artists'],
@@ -119,11 +142,45 @@ export default function MusicBrowser() {
     }
   };
 
+  const seekTo = async (position: number) => {
+    try {
+      await fetch('/api/music/seek', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ position }),
+      });
+      refetchStatus();
+    } catch (error) {
+      console.error('Failed to seek:', error);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className="h-full flex flex-col bg-white rounded-lg shadow-lg">
       {/* Now Playing Bar */}
       {nowPlaying?.title && (
         <div className="p-4 bg-gradient-to-r from-green-500 to-teal-600 text-white border-b">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-sm">🔊</span>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={Math.round((nowPlaying.volume || 0) * 100)}
+              onChange={(e) => setVolume(parseInt(e.target.value) / 100)}
+              className="flex-1 h-2 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+              title="Volume"
+            />
+            <span className="text-sm w-10 text-right">
+              {Math.round((nowPlaying.volume || 0) * 100)}%
+            </span>
+          </div>
           <div className="flex items-center justify-between mb-3">
             <div className="flex-1 min-w-0">
               <div className="font-semibold truncate">{nowPlaying.title}</div>
@@ -162,21 +219,33 @@ export default function MusicBrowser() {
               </button>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm">🔊</span>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={Math.round((nowPlaying.volume || 0) * 100)}
-              onChange={(e) => setVolume(parseInt(e.target.value) / 100)}
-              className="flex-1 h-2 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
-              title="Volume"
-            />
-            <span className="text-sm w-10 text-right">
-              {Math.round((nowPlaying.volume || 0) * 100)}%
-            </span>
-          </div>
+          {nowPlaying.duration && (
+            <div className="flex items-center gap-3">
+              <span className="text-xs w-10 text-right">{formatTime(localPosition)}</span>
+              <div className="flex-1 relative">
+                <div className="h-1 bg-white/20 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-white transition-all duration-200"
+                    style={{ width: `${(localPosition / nowPlaying.duration) * 100}%` }}
+                  />
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max={nowPlaying.duration}
+                  value={localPosition}
+                  onChange={(e) => {
+                    const newPos = parseInt(e.target.value);
+                    setLocalPosition(newPos);
+                    seekTo(newPos);
+                  }}
+                  className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                  title="Seek"
+                />
+              </div>
+              <span className="text-xs w-10">{formatTime(nowPlaying.duration)}</span>
+            </div>
+          )}
         </div>
       )}
 
