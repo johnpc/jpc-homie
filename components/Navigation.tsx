@@ -38,6 +38,16 @@ export default function Navigation() {
       >
         📊 Dashboard
       </Link>
+      <Link
+        href="/temperature"
+        className={`px-4 py-2 rounded-lg font-medium transition ${
+          pathname === '/temperature'
+            ? 'bg-blue-600 text-white'
+            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+        }`}
+      >
+        🌡️ Temperature
+      </Link>
     </nav>
   );
 }
