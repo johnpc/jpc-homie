@@ -101,9 +101,15 @@ export default function Temperature() {
         <label className="block text-gray-700 mb-2">Set Temperature</label>
         <div className="flex gap-2 mb-2">
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
             value={targetValue}
-            onChange={(e) => setTargetValue(Number(e.target.value))}
+            onChange={(e) => {
+              const val = e.target.value.replace(/[^0-9]/g, '');
+              if (val === '' || (parseInt(val) >= 0 && parseInt(val) <= 100)) {
+                setTargetValue(val === '' ? 0 : parseInt(val));
+              }
+            }}
             className="flex-1 px-4 py-2 border rounded-lg"
           />
           <select
