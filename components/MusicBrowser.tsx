@@ -9,6 +9,7 @@ interface NowPlaying {
   title?: string;
   artist?: string;
   album?: string;
+  volume?: number;
 }
 
 export default function MusicBrowser() {
@@ -105,12 +106,25 @@ export default function MusicBrowser() {
     }
   };
 
+  const setVolume = async (volume: number) => {
+    try {
+      await fetch('/api/music/volume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ volume }),
+      });
+      refetchStatus();
+    } catch (error) {
+      console.error('Failed to set volume:', error);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-white rounded-lg shadow-lg">
       {/* Now Playing Bar */}
       {nowPlaying?.title && (
         <div className="p-4 bg-gradient-to-r from-green-500 to-teal-600 text-white border-b">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex-1 min-w-0">
               <div className="font-semibold truncate">{nowPlaying.title}</div>
               <div className="text-sm opacity-90 truncate">
@@ -147,6 +161,21 @@ export default function MusicBrowser() {
                 ⏹️
               </button>
             </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm">🔊</span>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={Math.round((nowPlaying.volume || 0) * 100)}
+              onChange={(e) => setVolume(parseInt(e.target.value) / 100)}
+              className="flex-1 h-2 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+              title="Volume"
+            />
+            <span className="text-sm w-10 text-right">
+              {Math.round((nowPlaying.volume || 0) * 100)}%
+            </span>
           </div>
         </div>
       )}

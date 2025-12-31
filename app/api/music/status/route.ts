@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
       title: data.attributes.media_title,
       artist: data.attributes.media_artist,
       album: data.attributes.media_album_name,
+      volume: data.attributes.volume_level,
     });
   } catch (error) {
     console.error('Status error:', error);
