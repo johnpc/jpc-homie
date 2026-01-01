@@ -30,6 +30,9 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+# Install ADB for Android TV control
+RUN apk add --no-cache android-tools
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
