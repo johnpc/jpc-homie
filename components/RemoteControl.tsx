@@ -78,7 +78,7 @@ export default function RemoteControl() {
       {/* Status Card */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold">📺 Nvidia Shield</h3>
+          <h3 className="text-xl font-semibold text-black">📺 Nvidia Shield</h3>
           <span
             className={`px-3 py-1 rounded-full text-sm font-medium ${
               isOn ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
@@ -156,7 +156,7 @@ export default function RemoteControl() {
 
       {/* Navigation Pad */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Navigation</h3>
+        <h3 className="text-lg font-semibold mb-4 text-black">Navigation</h3>
         <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
           <div></div>
           <button
@@ -256,14 +256,14 @@ export default function RemoteControl() {
 
       {/* Text Input */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Text Input</h3>
+        <h3 className="text-lg font-semibold mb-4 text-black">Text Input</h3>
         <form onSubmit={handleTextSubmit} className="flex gap-2">
           <input
             type="text"
             value={textInput}
             onChange={(e) => setTextInput(e.target.value)}
             placeholder="Type text to send to TV..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
           />
           <button
             type="submit"
