@@ -48,6 +48,16 @@ export default function Navigation() {
       >
         🌡️ Temperature
       </Link>
+      <Link
+        href="/remote"
+        className={`px-3 py-2 rounded-lg font-medium transition text-sm ${
+          pathname === '/remote'
+            ? 'bg-blue-600 text-white'
+            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+        }`}
+      >
+        📺 Remote
+      </Link>
     </nav>
   );
 }
