@@ -80,7 +80,7 @@ export default function Temperature() {
 
   return (
     <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-2xl font-bold mb-6 text-center">🌡️ Thermostat</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center text-black">🌡️ Thermostat</h2>
 
       <div className="mb-6 text-center">
         <div className="text-5xl font-bold text-blue-600 mb-2">
@@ -92,7 +92,7 @@ export default function Temperature() {
       <div className="mb-6 p-4 bg-gray-50 rounded-lg">
         <div className="flex justify-between mb-2">
           <span className="text-gray-700">Target:</span>
-          <span className="font-semibold">
+          <span className="font-semibold text-black">
             {data.mode === 'range'
               ? `${scale === 'F' ? lowF : lowC}-${scale === 'F' ? highF : highC}°${scale}`
               : `${scale === 'F' ? targetF : targetC}°${scale}`}
@@ -100,7 +100,7 @@ export default function Temperature() {
         </div>
         <div className="flex justify-between mb-2">
           <span className="text-gray-700">Mode:</span>
-          <span className="font-semibold capitalize">{data.mode}</span>
+          <span className="font-semibold capitalize text-black">{data.mode}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-gray-700">Status:</span>
@@ -126,7 +126,7 @@ export default function Temperature() {
                     setLowTemp(val === '' ? 0 : parseInt(val));
                   }
                 }}
-                className="flex-1 px-4 py-2 border rounded-lg"
+                className="flex-1 px-4 py-2 border rounded-lg text-black"
               />
             </div>
             <div className="flex gap-2 items-center">
@@ -141,7 +141,7 @@ export default function Temperature() {
                     setHighTemp(val === '' ? 0 : parseInt(val));
                   }
                 }}
-                className="flex-1 px-4 py-2 border rounded-lg"
+                className="flex-1 px-4 py-2 border rounded-lg text-black"
               />
             </div>
             <select
@@ -157,7 +157,7 @@ export default function Temperature() {
                   setHighTemp(Math.round(data.targetTemp) + 2);
                 }
               }}
-              className="w-full px-4 py-2 border rounded-lg"
+              className="w-full px-4 py-2 border rounded-lg text-black"
             >
               <option value="F">°F</option>
               <option value="C">°C</option>
@@ -175,7 +175,7 @@ export default function Temperature() {
                   setTargetValue(val === '' ? 0 : parseInt(val));
                 }
               }}
-              className="flex-1 px-4 py-2 border rounded-lg"
+              className="flex-1 px-4 py-2 border rounded-lg text-black"
             />
             <select
               value={scale}
@@ -188,7 +188,7 @@ export default function Temperature() {
                     : Math.round(data.targetTemp)
                 );
               }}
-              className="px-4 py-2 border rounded-lg"
+              className="px-4 py-2 border rounded-lg text-black"
             >
               <option value="F">°F</option>
               <option value="C">°C</option>
@@ -199,7 +199,7 @@ export default function Temperature() {
           <select
             value={mode}
             onChange={(e) => setMode(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg"
+            className="w-full px-4 py-2 border rounded-lg text-black"
           >
             <option value="heat">Heat</option>
             <option value="cool">Cool</option>
