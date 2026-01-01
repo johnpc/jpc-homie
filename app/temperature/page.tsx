@@ -12,7 +12,7 @@ export default function TemperaturePage() {
             <p className="text-base text-gray-600 mb-4">Your smart home assistant</p>
             <Navigation />
           </div>
-          <div className="flex-1 overflow-hidden px-4">
+          <div className="flex-1 overflow-y-auto px-4">
             <Temperature />
           </div>
         </div>

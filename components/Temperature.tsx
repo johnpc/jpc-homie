@@ -11,30 +11,50 @@ export default function Temperature() {
     mode: string;
     heating: boolean;
   } | null>(null);
+  const [humidity, setHumidity] = useState<number | null>(null);
+  const [fanMode, setFanMode] = useState<'on' | 'auto' | 'off'>('auto');
+  const [fanDuration, setFanDuration] = useState(900);
   const [targetValue, setTargetValue] = useState(72);
   const [lowTemp, setLowTemp] = useState(68);
   const [highTemp, setHighTemp] = useState(74);
   const [mode, setMode] = useState('heat');
   const [scale, setScale] = useState<'F' | 'C'>('F');
   const [loading, setLoading] = useState(false);
+  const [fanLoading, setFanLoading] = useState(false);
 
   const fetchData = async () => {
-    const res = await fetch('/api/temperature');
-    const json = await res.json();
-    setData(json);
-    // Map 'range' mode to 'heat-cool' for the UI
-    setMode(json.mode === 'range' ? 'heat-cool' : json.mode);
-    if (json.targetTemp) {
+    const [tempRes, humidityRes, fanRes] = await Promise.all([
+      fetch('/api/temperature'),
+      fetch('/api/humidity'),
+      fetch('/api/fan'),
+    ]);
+
+    const tempData = await tempRes.json();
+    const humidityData = await humidityRes.json();
+    const fanData = await fanRes.json();
+
+    setData(tempData);
+    setHumidity(humidityData.humidity);
+    setFanMode(fanData.fanMode || 'auto');
+
+    setMode(tempData.mode === 'range' ? 'heat-cool' : tempData.mode);
+    if (tempData.targetTemp) {
       setTargetValue(
-        scale === 'F' ? Math.round((json.targetTemp * 9) / 5 + 32) : Math.round(json.targetTemp)
+        scale === 'F'
+          ? Math.round((tempData.targetTemp * 9) / 5 + 32)
+          : Math.round(tempData.targetTemp)
       );
     }
-    if (json.targetLow && json.targetHigh) {
+    if (tempData.targetLow && tempData.targetHigh) {
       setLowTemp(
-        scale === 'F' ? Math.round((json.targetLow * 9) / 5 + 32) : Math.round(json.targetLow)
+        scale === 'F'
+          ? Math.round((tempData.targetLow * 9) / 5 + 32)
+          : Math.round(tempData.targetLow)
       );
       setHighTemp(
-        scale === 'F' ? Math.round((json.targetHigh * 9) / 5 + 32) : Math.round(json.targetHigh)
+        scale === 'F'
+          ? Math.round((tempData.targetHigh * 9) / 5 + 32)
+          : Math.round(tempData.targetHigh)
       );
     }
   };
@@ -60,10 +80,24 @@ export default function Temperature() {
       });
     }
 
-    // Wait 10 seconds then refresh
     setTimeout(async () => {
       await fetchData();
       setLoading(false);
+    }, 10000);
+  };
+
+  const setFan = async () => {
+    setFanLoading(true);
+
+    await fetch('/api/fan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: fanMode, duration: fanDuration }),
+    });
+
+    setTimeout(async () => {
+      await fetchData();
+      setFanLoading(false);
     }, 10000);
   };
 
@@ -221,6 +255,59 @@ export default function Temperature() {
             'Set Temperature'
           )}
         </button>
+      </div>
+
+      <div className="mt-8 pt-6 border-t border-gray-200">
+        <h3 className="text-xl font-bold mb-4 text-center text-black">💧 Humidity & Fan</h3>
+
+        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-700">Humidity:</span>
+            <span className="text-2xl font-bold text-blue-600">{humidity}%</span>
+          </div>
+        </div>
+
+        <div className="p-4 bg-gray-50 rounded-lg">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-gray-700">Fan Mode:</span>
+            <span className="font-semibold capitalize text-black">{fanMode}</span>
+          </div>
+          <select
+            value={fanMode}
+            onChange={(e) => setFanMode(e.target.value as 'on' | 'auto' | 'off')}
+            className="w-full px-4 py-2 border rounded-lg text-black mb-2"
+          >
+            <option value="on">On</option>
+            <option value="auto">Auto</option>
+            <option value="off">Off</option>
+          </select>
+          {fanMode === 'on' && (
+            <div className="mb-2">
+              <label className="block text-sm text-gray-700 mb-1">Timer (seconds)</label>
+              <input
+                type="number"
+                value={fanDuration}
+                onChange={(e) => setFanDuration(parseInt(e.target.value) || 900)}
+                className="w-full px-4 py-2 border rounded-lg text-black"
+                placeholder="900"
+              />
+            </div>
+          )}
+          <button
+            onClick={setFan}
+            disabled={fanLoading}
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 flex items-center justify-center gap-2"
+          >
+            {fanLoading ? (
+              <>
+                <span className="animate-spin">⏳</span>
+                Updating...
+              </>
+            ) : (
+              'Set Fan Mode'
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
