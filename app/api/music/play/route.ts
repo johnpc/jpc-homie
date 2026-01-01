@@ -15,12 +15,7 @@ export async function POST(req: NextRequest) {
 
     // Search Jellyfin for exact track name
     if (jellyfinUrl && jellyfinApiKey) {
-      const words = track
-        .toLowerCase()
-        .replace(/['']/g, '')
-        .split(' ')
-        .filter((w: string) => w.length > 3 && !['the', 'and', 'with', 'from'].includes(w));
-      const searchTerm = words.length > 0 ? words[0] : track;
+      const searchTerm = track;
 
       const searchUrl = `${jellyfinUrl}/Items?searchTerm=${encodeURIComponent(searchTerm)}&IncludeItemTypes=Audio&Recursive=true&Limit=50&api_key=${jellyfinApiKey}`;
       const searchResponse = await fetch(searchUrl);
@@ -36,8 +31,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (items.length > 0) {
-          // Use exact track name from Jellyfin
-          const exactTrackName = items[0].Name;
+          const itemName = items[0].Name;
 
           const playResponse = await fetch(`${haUrl}/api/services/media_player/play_media`, {
             method: 'POST',
@@ -47,7 +41,7 @@ export async function POST(req: NextRequest) {
             },
             body: JSON.stringify({
               entity_id: 'media_player.living_room_sonos',
-              media_content_id: exactTrackName,
+              media_content_id: itemName,
               media_content_type: 'track',
             }),
           });
