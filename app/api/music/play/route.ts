@@ -31,7 +31,10 @@ export async function POST(req: NextRequest) {
         }
 
         if (items.length > 0) {
-          const itemName = items[0].Name;
+          const item = items[0];
+          const itemName = item.Name;
+          const itemArtist = item.Artists?.[0];
+          const mediaContentId = itemArtist ? `${itemArtist} - ${itemName}` : itemName;
 
           const playResponse = await fetch(`${haUrl}/api/services/media_player/play_media`, {
             method: 'POST',
@@ -41,7 +44,7 @@ export async function POST(req: NextRequest) {
             },
             body: JSON.stringify({
               entity_id: 'media_player.living_room_sonos',
-              media_content_id: itemName,
+              media_content_id: mediaContentId,
               media_content_type: 'track',
             }),
           });
