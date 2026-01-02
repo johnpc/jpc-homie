@@ -7,10 +7,10 @@ export default function Navigation() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex gap-4 mb-4">
+    <nav className="flex flex-wrap gap-2 mb-4 justify-center">
       <Link
         href="/"
-        className={`px-4 py-2 rounded-lg font-medium transition ${
+        className={`px-3 py-2 rounded-lg font-medium transition text-sm ${
           pathname === '/'
             ? 'bg-blue-600 text-white'
             : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
@@ -20,7 +20,7 @@ export default function Navigation() {
       </Link>
       <Link
         href="/music"
-        className={`px-4 py-2 rounded-lg font-medium transition ${
+        className={`px-3 py-2 rounded-lg font-medium transition text-sm ${
           pathname === '/music'
             ? 'bg-blue-600 text-white'
             : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
@@ -30,13 +30,43 @@ export default function Navigation() {
       </Link>
       <Link
         href="/dashboard"
-        className={`px-4 py-2 rounded-lg font-medium transition ${
+        className={`px-3 py-2 rounded-lg font-medium transition text-sm ${
           pathname === '/dashboard'
             ? 'bg-blue-600 text-white'
             : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
         }`}
       >
         📊 Dashboard
+      </Link>
+      <Link
+        href="/temperature"
+        className={`px-3 py-2 rounded-lg font-medium transition text-sm ${
+          pathname === '/temperature'
+            ? 'bg-blue-600 text-white'
+            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+        }`}
+      >
+        🌡️ Temperature
+      </Link>
+      <Link
+        href="/remote"
+        className={`px-3 py-2 rounded-lg font-medium transition text-sm ${
+          pathname === '/remote'
+            ? 'bg-blue-600 text-white'
+            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+        }`}
+      >
+        📺 Remote
+      </Link>
+      <Link
+        href="/adu"
+        className={`px-3 py-2 rounded-lg font-medium transition text-sm ${
+          pathname === '/adu'
+            ? 'bg-blue-600 text-white'
+            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+        }`}
+      >
+        🏡 ADU
       </Link>
     </nav>
   );
