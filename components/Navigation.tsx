@@ -58,6 +58,16 @@ export default function Navigation() {
       >
         📺 Remote
       </Link>
+      <Link
+        href="/adu"
+        className={`px-3 py-2 rounded-lg font-medium transition text-sm ${
+          pathname === '/adu'
+            ? 'bg-blue-600 text-white'
+            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+        }`}
+      >
+        🏡 ADU
+      </Link>
     </nav>
   );
 }
