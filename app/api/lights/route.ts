@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { action } = await request.json();
+    const { action, brightness } = await request.json();
 
     // Get all light entities
     const statesRes = await fetch(`${haUrl}/api/states`, {
@@ -20,7 +20,17 @@ export async function POST(request: Request) {
       .filter((e: { entity_id: string }) => e.entity_id.startsWith('light.'))
       .map((e: { entity_id: string }) => e.entity_id);
 
-    if (action === 'all_on') {
+    if (action === 'set_brightness') {
+      const brightnessValue = Math.round((brightness / 100) * 255);
+      await fetch(`${haUrl}/api/services/light/turn_on`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${haToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ entity_id: lights, brightness: brightnessValue }),
+      });
+    } else if (action === 'all_on') {
       await fetch(`${haUrl}/api/services/light/turn_on`, {
         method: 'POST',
         headers: {

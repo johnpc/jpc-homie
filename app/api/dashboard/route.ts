@@ -13,6 +13,7 @@ interface DashboardData {
   garage: { state: string; time: string };
   power: { kw: number; kwh: number; cost: number };
   lights: number;
+  lightsBrightness: number;
 }
 
 export async function GET() {
@@ -59,16 +60,25 @@ export async function GET() {
   const costDollars = energyKwh * 0.17;
 
   // Lights
-  const lights = entities.filter(
-    (e) => e.entity_id.startsWith('light.') && e.state === 'on'
-  ).length;
+  const lightEntities = entities.filter((e) => e.entity_id.startsWith('light.'));
+  const lightsOn = lightEntities.filter((e) => e.state === 'on');
+  const avgBrightness =
+    lightsOn.length > 0
+      ? Math.round(
+          lightsOn.reduce((sum, light) => {
+            const brightness = (light.attributes.brightness as number) || 255;
+            return sum + (brightness / 255) * 100;
+          }, 0) / lightsOn.length
+        )
+      : 0;
 
   const data: DashboardData = {
     stairs: { on: stairsOn, total: stairs.length },
     locks: { locked: locksLocked, total: locks.length },
     garage: { state: garage?.state || 'unknown', time: garageTime },
     power: { kw: powerKw, kwh: energyKwh, cost: costDollars },
-    lights,
+    lights: lightsOn.length,
+    lightsBrightness: avgBrightness,
   };
 
   return NextResponse.json(data);

@@ -9,6 +9,7 @@ interface DashboardData {
   garage: { state: string; time: string };
   power: { kw: number; kwh: number; cost: number };
   lights: number;
+  lightsBrightness: number;
 }
 
 export default function Dashboard() {
@@ -16,6 +17,7 @@ export default function Dashboard() {
   const [locksLoading, setLocksLoading] = useState(false);
   const [garageLoading, setGarageLoading] = useState(false);
   const [lightsLoading, setLightsLoading] = useState(false);
+  const [brightness, setBrightness] = useState(0);
 
   const { data, isLoading } = useQuery<DashboardData>({
     queryKey: ['dashboard'],
@@ -25,6 +27,11 @@ export default function Dashboard() {
     },
     refetchInterval: 60000,
   });
+
+  // Update brightness when data changes
+  if (data && brightness === 0 && data.lightsBrightness > 0) {
+    setBrightness(data.lightsBrightness);
+  }
 
   const toggleStairs = useMutation({
     mutationFn: async (action: 'on' | 'off') => {
@@ -77,12 +84,12 @@ export default function Dashboard() {
   });
 
   const controlLights = useMutation({
-    mutationFn: async (action: string) => {
+    mutationFn: async (action: string | { action: string; brightness: number }) => {
       setLightsLoading(true);
       const res = await fetch('/api/lights', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify(typeof action === 'string' ? { action } : action),
       });
       return res.json();
     },
@@ -216,6 +223,26 @@ export default function Dashboard() {
         >
           {data.lights} ON
         </span>
+
+        {/* Brightness Slider */}
+        <div className="mb-4">
+          <div className="flex justify-between items-center mb-2">
+            <label className="text-sm font-medium text-gray-700">Brightness</label>
+            <span className="text-sm text-gray-600">{brightness}%</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={brightness}
+            onChange={(e) => setBrightness(Number(e.target.value))}
+            onMouseUp={() => controlLights.mutate({ action: 'set_brightness', brightness })}
+            onTouchEnd={() => controlLights.mutate({ action: 'set_brightness', brightness })}
+            disabled={lightsLoading}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
+          />
+        </div>
+
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => controlLights.mutate('all_on')}
