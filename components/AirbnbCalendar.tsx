@@ -124,10 +124,17 @@ export default function AirbnbCalendar() {
         ))}
         {days.map((day, i) => {
           const info = day ? getDateStatus(day) : { status: null, label: '' };
+          const isToday =
+            day &&
+            day.getDate() === new Date().getDate() &&
+            day.getMonth() === new Date().getMonth() &&
+            day.getFullYear() === new Date().getFullYear();
           return (
             <div
               key={i}
               className={`aspect-square flex items-center justify-center rounded text-gray-900 font-medium ${
+                isToday ? 'border-4 border-purple-600' : ''
+              } ${
                 info.status === 'transition'
                   ? 'bg-yellow-200'
                   : info.status === 'booked'
