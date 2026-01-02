@@ -1,4 +1,6 @@
 import AirbnbCalendar from '@/components/AirbnbCalendar';
+import ADUSmartLock from '@/components/ADUSmartLock';
+import ADUThermostat from '@/components/ADUThermostat';
 import Navigation from '@/components/Navigation';
 import { Providers } from '../providers';
 
@@ -12,8 +14,12 @@ export default function ADUPage() {
             <p className="text-base text-gray-600 mb-4">Your smart home assistant</p>
             <Navigation />
           </div>
-          <div className="flex-1 overflow-auto px-4">
+          <div className="flex-1 overflow-auto px-4 pb-8">
             <AirbnbCalendar />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+              <ADUSmartLock />
+              <ADUThermostat />
+            </div>
           </div>
         </div>
       </main>
