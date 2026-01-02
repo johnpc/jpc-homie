@@ -1,6 +1,8 @@
 import AirbnbCalendar from '@/components/AirbnbCalendar';
 import ADUSmartLock from '@/components/ADUSmartLock';
 import ADUThermostat from '@/components/ADUThermostat';
+import ADUTVStatus from '@/components/ADUTVStatus';
+import ADUTCLTVStatus from '@/components/ADUTCLTVStatus';
 import Navigation from '@/components/Navigation';
 import { Providers } from '../providers';
 
@@ -19,6 +21,8 @@ export default function ADUPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
               <ADUSmartLock />
               <ADUThermostat />
+              <ADUTVStatus />
+              <ADUTCLTVStatus />
             </div>
           </div>
         </div>

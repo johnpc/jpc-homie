@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 
 interface LockState {
-  state: 'locked' | 'unlocked';
+  state: 'locked' | 'unlocked' | 'locking' | 'unlocking';
   last_changed: string;
 }
 
@@ -38,17 +38,20 @@ export default function ADUSmartLock() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       });
-      await fetchLockState();
+      setTimeout(async () => {
+        await fetchLockState();
+        setActionLoading(false);
+      }, 10000);
     } catch (err) {
       console.error('Failed to toggle lock:', err);
-    } finally {
       setActionLoading(false);
     }
   };
 
   if (loading) return <div className="bg-white rounded-lg shadow-lg p-6">Loading...</div>;
 
-  const isLocked = lockState?.state === 'locked';
+  const isLocked = lockState?.state === 'locked' || lockState?.state === 'locking';
+  const isUnlocked = lockState?.state === 'unlocked' || lockState?.state === 'unlocking';
   const lastChanged = lockState?.last_changed
     ? new Date(lockState.last_changed).toLocaleString()
     : 'Unknown';
@@ -62,7 +65,9 @@ export default function ADUSmartLock() {
             <div className="text-3xl font-bold text-gray-900">
               {isLocked ? '🔒 Locked' : '🔓 Unlocked'}
             </div>
-            <div className="text-sm text-gray-600 mt-1">Since: {lastChanged}</div>
+            <div className="text-sm text-gray-600 mt-1">
+              Status: {lockState?.state} | Since: {lastChanged}
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
@@ -79,9 +84,9 @@ export default function ADUSmartLock() {
           </button>
           <button
             onClick={() => toggleLock('unlock')}
-            disabled={actionLoading || !isLocked}
+            disabled={actionLoading || isUnlocked}
             className={`flex-1 py-3 rounded-lg font-medium transition ${
-              !isLocked
+              isUnlocked
                 ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                 : 'bg-green-500 text-white hover:bg-green-600'
             }`}
