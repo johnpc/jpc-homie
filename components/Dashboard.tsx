@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import LightControls from './LightControls';
 
 interface DashboardData {
   stairs: { on: number; total: number };
@@ -10,6 +11,16 @@ interface DashboardData {
   power: { kw: number; kwh: number; cost: number };
   lights: number;
   lightsBrightness: number;
+  allLights?: Array<{ id: string; name: string; on: boolean }>;
+}
+
+interface Room {
+  id: string;
+  name: string;
+  lights: string[];
+  lightsOn: number;
+  avgBrightness: number;
+  lightDetails?: Array<{ id: string; name: string; on: boolean }>;
 }
 
 export default function Dashboard() {
@@ -18,6 +29,8 @@ export default function Dashboard() {
   const [garageLoading, setGarageLoading] = useState(false);
   const [lightsLoading, setLightsLoading] = useState(false);
   const [brightness, setBrightness] = useState(0);
+  const [roomBrightness, setRoomBrightness] = useState<Record<string, number>>({});
+  const [roomLoading, setRoomLoading] = useState<Record<string, boolean>>({});
 
   const { data, isLoading } = useQuery<DashboardData>({
     queryKey: ['dashboard'],
@@ -28,9 +41,27 @@ export default function Dashboard() {
     refetchInterval: 60000,
   });
 
+  const { data: rooms } = useQuery<Room[]>({
+    queryKey: ['rooms'],
+    queryFn: async () => {
+      const res = await fetch('/api/rooms');
+      return res.json();
+    },
+    refetchInterval: 60000,
+  });
+
   // Update brightness when data changes
   if (data && brightness === 0 && data.lightsBrightness > 0) {
     setBrightness(data.lightsBrightness);
+  }
+
+  // Initialize room brightness
+  if (rooms && Array.isArray(rooms) && Object.keys(roomBrightness).length === 0) {
+    const initial: Record<string, number> = {};
+    rooms.forEach((room) => {
+      initial[room.id] = room.avgBrightness;
+    });
+    setRoomBrightness(initial);
   }
 
   const toggleStairs = useMutation({
@@ -96,7 +127,38 @@ export default function Dashboard() {
     onSuccess: () => {
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['rooms'] });
         setLightsLoading(false);
+      }, 2000);
+    },
+  });
+
+  const controlRoomLights = useMutation({
+    mutationFn: async ({
+      roomId,
+      action,
+      brightness,
+    }: {
+      roomId: string;
+      action: string;
+      brightness?: number;
+    }) => {
+      setRoomLoading((prev) => ({ ...prev, [roomId]: true }));
+      const res = await fetch('/api/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          action === 'set_brightness'
+            ? { groupId: roomId, action, brightness }
+            : { groupId: roomId, action }
+        ),
+      });
+      return res.json();
+    },
+    onSuccess: (_, variables) => {
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['rooms'] });
+        setRoomLoading((prev) => ({ ...prev, [variables.roomId]: false }));
       }, 2000);
     },
   });
@@ -215,7 +277,7 @@ export default function Dashboard() {
 
       {/* Lights */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-3 text-gray-900">Lights</h3>
+        <h3 className="text-lg font-semibold mb-3 text-gray-900">All Lights</h3>
         <span
           className={`inline-block px-3 py-1 rounded-full text-sm font-medium mb-3 ${
             data.lights === 0 ? 'bg-gray-200 text-gray-700' : 'bg-blue-100 text-blue-800'
@@ -224,77 +286,46 @@ export default function Dashboard() {
           {data.lights} ON
         </span>
 
-        {/* Brightness Slider */}
-        <div className="mb-4">
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-sm font-medium text-gray-700">Brightness</label>
-            <span className="text-sm text-gray-600">{brightness}%</span>
-          </div>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={brightness}
-            onChange={(e) => setBrightness(Number(e.target.value))}
-            onMouseUp={() => controlLights.mutate({ action: 'set_brightness', brightness })}
-            onTouchEnd={() => controlLights.mutate({ action: 'set_brightness', brightness })}
-            disabled={lightsLoading}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
+        <LightControls
+          brightness={brightness}
+          onBrightnessChange={setBrightness}
+          onBrightnessSet={() => controlLights.mutate({ action: 'set_brightness', brightness })}
+          onAction={(action) => controlLights.mutate(action)}
+          isLoading={lightsLoading}
+          lights={data.allLights}
+        />
+      </div>
+
+      {/* Rooms */}
+      {rooms?.map((room) => (
+        <div key={room.id} className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold mb-3 text-gray-900">{room.name}</h3>
+          <span
+            className={`inline-block px-3 py-1 rounded-full text-sm font-medium mb-3 ${
+              room.lightsOn === 0 ? 'bg-gray-200 text-gray-700' : 'bg-blue-100 text-blue-800'
+            }`}
+          >
+            {room.lightsOn} ON
+          </span>
+
+          <LightControls
+            brightness={roomBrightness[room.id] || room.avgBrightness}
+            onBrightnessChange={(value) =>
+              setRoomBrightness((prev) => ({ ...prev, [room.id]: value }))
+            }
+            onBrightnessSet={() =>
+              controlRoomLights.mutate({
+                roomId: room.id,
+                action: 'set_brightness',
+                brightness: roomBrightness[room.id],
+              })
+            }
+            onAction={(action) => controlRoomLights.mutate({ roomId: room.id, action })}
+            isLoading={roomLoading[room.id] || false}
+            lights={room.lightDetails}
           />
         </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => controlLights.mutate('all_on')}
-            disabled={lightsLoading}
-            className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 text-xs"
-          >
-            All On
-          </button>
-          <button
-            onClick={() => controlLights.mutate('all_off')}
-            disabled={lightsLoading}
-            className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-400 text-xs"
-          >
-            All Off
-          </button>
-          <button
-            onClick={() => controlLights.mutate('all_bright')}
-            disabled={lightsLoading}
-            className="px-3 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:bg-gray-400 text-xs"
-          >
-            All Bright
-          </button>
-          <button
-            onClick={() => controlLights.mutate('all_blue')}
-            disabled={lightsLoading}
-            className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 text-xs"
-          >
-            All Blue
-          </button>
-          <button
-            onClick={() => controlLights.mutate('all_red')}
-            disabled={lightsLoading}
-            className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 text-xs"
-          >
-            All Red
-          </button>
-          <button
-            onClick={() => controlLights.mutate('all_random')}
-            disabled={lightsLoading}
-            className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 text-xs"
-          >
-            {lightsLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></span>
-                Loading...
-              </span>
-            ) : (
-              'Random'
-            )}
-          </button>
-        </div>
-      </div>
+      ))}
     </div>
   );
 }

@@ -14,6 +14,7 @@ interface DashboardData {
   power: { kw: number; kwh: number; cost: number };
   lights: number;
   lightsBrightness: number;
+  allLights: Array<{ id: string; name: string; on: boolean }>;
 }
 
 export async function GET() {
@@ -72,6 +73,12 @@ export async function GET() {
         )
       : 0;
 
+  const allLights = lightEntities.map((light) => ({
+    id: light.entity_id,
+    name: (light.attributes.friendly_name as string) || light.entity_id,
+    on: light.state === 'on',
+  }));
+
   const data: DashboardData = {
     stairs: { on: stairsOn, total: stairs.length },
     locks: { locked: locksLocked, total: locks.length },
@@ -79,6 +86,7 @@ export async function GET() {
     power: { kw: powerKw, kwh: energyKwh, cost: costDollars },
     lights: lightsOn.length,
     lightsBrightness: avgBrightness,
+    allLights,
   };
 
   return NextResponse.json(data);
