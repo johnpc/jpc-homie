@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
-  const rokuIp = process.env.ROKU_TV_IP || '192.168.4.177';
+  const rokuIp = process.env.ROKU_TV_IP;
+
+  if (!rokuIp) {
+    return NextResponse.json({ error: 'ROKU_TV_IP not configured' }, { status: 500 });
+  }
+
   const { direction } = await request.json();
 
   try {

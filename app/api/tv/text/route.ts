@@ -5,7 +5,12 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 export async function POST(request: Request) {
-  const shieldIp = process.env.SHIELD_IP || '192.168.4.241';
+  const shieldIp = process.env.SHIELD_IP;
+
+  if (!shieldIp) {
+    return NextResponse.json({ error: 'SHIELD_IP not configured' }, { status: 500 });
+  }
+
   const { text } = await request.json();
 
   try {

@@ -8,10 +8,10 @@ const execAsync = promisify(exec);
 export async function GET() {
   const haUrl = process.env.HOME_ASSISTANT_URL;
   const haToken = process.env.HOME_ASSISTANT_TOKEN;
-  const shieldIp = process.env.SHIELD_IP || '192.168.4.241';
+  const shieldIp = process.env.SHIELD_IP;
 
-  if (!haUrl || !haToken) {
-    return NextResponse.json({ error: 'Home Assistant not configured' }, { status: 500 });
+  if (!haUrl || !haToken || !shieldIp) {
+    return NextResponse.json({ error: 'Missing configuration' }, { status: 500 });
   }
 
   const entityId = await getShieldEntityId();
