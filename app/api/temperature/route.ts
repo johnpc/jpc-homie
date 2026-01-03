@@ -9,49 +9,18 @@ export async function GET() {
   }
 
   try {
-    const [currentTemp, targetTemp, targetLow, targetHigh, mode, heating] = await Promise.all([
-      fetch(`${haUrl}/api/states/sensor.thermostat_current_temp`, {
-        headers: { Authorization: `Bearer ${haToken}` },
-      }),
-      fetch(`${haUrl}/api/states/sensor.thermostat_target_temp`, {
-        headers: { Authorization: `Bearer ${haToken}` },
-      }),
-      fetch(`${haUrl}/api/states/sensor.thermostat_target_temp_low`, {
-        headers: { Authorization: `Bearer ${haToken}` },
-      }),
-      fetch(`${haUrl}/api/states/sensor.thermostat_target_temp_high`, {
-        headers: { Authorization: `Bearer ${haToken}` },
-      }),
-      fetch(`${haUrl}/api/states/sensor.thermostat_mode`, {
-        headers: { Authorization: `Bearer ${haToken}` },
-      }),
-      fetch(`${haUrl}/api/states/sensor.thermostat_heating`, {
-        headers: { Authorization: `Bearer ${haToken}` },
-      }),
-    ]);
-
-    const data = await Promise.all([
-      currentTemp.json(),
-      targetTemp.json(),
-      targetLow.json(),
-      targetHigh.json(),
-      mode.json(),
-      heating.json(),
-    ]);
-
-    // Normalize to Celsius - currentTemp comes as F, others as C
-    const currentTempC = ((parseFloat(data[0].state) - 32) * 5) / 9;
-    const targetTempC = parseFloat(data[1].state);
-    const targetLowC = parseFloat(data[2].state) || 0;
-    const targetHighC = parseFloat(data[3].state) || 0;
+    const response = await fetch(`${haUrl}/api/states/climate.my_ecobee`, {
+      headers: { Authorization: `Bearer ${haToken}` },
+    });
+    const data = await response.json();
 
     return NextResponse.json({
-      currentTemp: currentTempC,
-      targetTemp: targetTempC,
-      targetLow: targetLowC,
-      targetHigh: targetHighC,
-      mode: data[4].state,
-      heating: data[5].state === 'True',
+      currentTemp: data.attributes.current_temperature,
+      targetTemp: data.attributes.temperature,
+      targetLow: data.attributes.target_temp_low || 0,
+      targetHigh: data.attributes.target_temp_high || 0,
+      mode: data.state,
+      heating: data.attributes.hvac_action === 'heating',
     });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
