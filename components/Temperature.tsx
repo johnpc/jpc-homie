@@ -39,23 +39,11 @@ export default function Temperature() {
 
     setMode(tempData.mode === 'range' ? 'heat-cool' : tempData.mode);
     if (tempData.targetTemp) {
-      setTargetValue(
-        scale === 'F'
-          ? Math.round((tempData.targetTemp * 9) / 5 + 32)
-          : Math.round(tempData.targetTemp)
-      );
+      setTargetValue(Math.round(tempData.targetTemp));
     }
     if (tempData.targetLow && tempData.targetHigh) {
-      setLowTemp(
-        scale === 'F'
-          ? Math.round((tempData.targetLow * 9) / 5 + 32)
-          : Math.round(tempData.targetLow)
-      );
-      setHighTemp(
-        scale === 'F'
-          ? Math.round((tempData.targetHigh * 9) / 5 + 32)
-          : Math.round(tempData.targetHigh)
-      );
+      setLowTemp(Math.round(tempData.targetLow));
+      setHighTemp(Math.round(tempData.targetHigh));
     }
   };
 
@@ -103,14 +91,14 @@ export default function Temperature() {
 
   if (!data) return <div className="text-center py-8">Loading...</div>;
 
-  const currentC = Math.round(data.currentTemp);
-  const currentF = Math.round((data.currentTemp * 9) / 5 + 32);
-  const targetC = Math.round(data.targetTemp);
-  const targetF = Math.round((data.targetTemp * 9) / 5 + 32);
-  const lowC = Math.round(data.targetLow);
-  const lowF = Math.round((data.targetLow * 9) / 5 + 32);
-  const highC = Math.round(data.targetHigh);
-  const highF = Math.round((data.targetHigh * 9) / 5 + 32);
+  const currentF = Math.round(data.currentTemp);
+  const currentC = Math.round(((data.currentTemp - 32) * 5) / 9);
+  const targetF = Math.round(data.targetTemp);
+  const targetC = Math.round(((data.targetTemp - 32) * 5) / 9);
+  const lowF = Math.round(data.targetLow);
+  const lowC = Math.round(((data.targetLow - 32) * 5) / 9);
+  const highF = Math.round(data.targetHigh);
+  const highC = Math.round(((data.targetHigh - 32) * 5) / 9);
 
   return (
     <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
@@ -184,11 +172,11 @@ export default function Temperature() {
                 const newScale = e.target.value as 'F' | 'C';
                 setScale(newScale);
                 if (newScale === 'F') {
-                  setLowTemp(Math.round((data.targetTemp * 9) / 5 + 32) - 3);
-                  setHighTemp(Math.round((data.targetTemp * 9) / 5 + 32) + 3);
+                  setLowTemp(Math.round(data.targetLow));
+                  setHighTemp(Math.round(data.targetHigh));
                 } else {
-                  setLowTemp(Math.round(data.targetTemp) - 2);
-                  setHighTemp(Math.round(data.targetTemp) + 2);
+                  setLowTemp(Math.round(((data.targetLow - 32) * 5) / 9));
+                  setHighTemp(Math.round(((data.targetHigh - 32) * 5) / 9));
                 }
               }}
               className="w-full px-4 py-2 border rounded-lg text-black"
@@ -218,8 +206,8 @@ export default function Temperature() {
                 setScale(newScale);
                 setTargetValue(
                   newScale === 'F'
-                    ? Math.round((data.targetTemp * 9) / 5 + 32)
-                    : Math.round(data.targetTemp)
+                    ? Math.round(data.targetTemp)
+                    : Math.round(((data.targetTemp - 32) * 5) / 9)
                 );
               }}
               className="px-4 py-2 border rounded-lg text-black"

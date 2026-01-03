@@ -9,18 +9,36 @@ export async function GET() {
   }
 
   try {
-    const response = await fetch(`${haUrl}/api/states/climate.my_ecobee`, {
-      headers: { Authorization: `Bearer ${haToken}` },
-    });
-    const data = await response.json();
+    const [current, target, low, high, mode, heating] = await Promise.all([
+      fetch(`${haUrl}/api/states/sensor.thermostat_current_temp`, {
+        headers: { Authorization: `Bearer ${haToken}` },
+      }),
+      fetch(`${haUrl}/api/states/sensor.thermostat_target_temp`, {
+        headers: { Authorization: `Bearer ${haToken}` },
+      }),
+      fetch(`${haUrl}/api/states/sensor.thermostat_target_temp_low`, {
+        headers: { Authorization: `Bearer ${haToken}` },
+      }),
+      fetch(`${haUrl}/api/states/sensor.thermostat_target_temp_high`, {
+        headers: { Authorization: `Bearer ${haToken}` },
+      }),
+      fetch(`${haUrl}/api/states/sensor.thermostat_mode`, {
+        headers: { Authorization: `Bearer ${haToken}` },
+      }),
+      fetch(`${haUrl}/api/states/sensor.thermostat_heating`, {
+        headers: { Authorization: `Bearer ${haToken}` },
+      }),
+    ]);
+
+    const toF = (c: number) => Math.round(((c * 9) / 5 + 32) * 10) / 10;
 
     return NextResponse.json({
-      currentTemp: data.attributes.current_temperature,
-      targetTemp: data.attributes.temperature,
-      targetLow: data.attributes.target_temp_low || 0,
-      targetHigh: data.attributes.target_temp_high || 0,
-      mode: data.state,
-      heating: data.attributes.hvac_action === 'heating',
+      currentTemp: parseFloat((await current.json()).state),
+      targetTemp: toF(parseFloat((await target.json()).state)),
+      targetLow: toF(parseFloat((await low.json()).state)),
+      targetHigh: toF(parseFloat((await high.json()).state)),
+      mode: (await mode.json()).state,
+      heating: (await heating.json()).state === 'True',
     });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
