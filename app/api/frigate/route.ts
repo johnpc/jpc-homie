@@ -33,7 +33,9 @@ export async function GET(request: Request) {
         id: event.id,
         camera: event.camera,
         label: event.label,
-        startTime: new Date(event.start_time * 1000).toLocaleString(),
+        startTime: new Date(event.start_time * 1000).toLocaleString('en-US', {
+          timeZone: 'America/New_York',
+        }),
         thumbnailUrl: `/api/frigate?thumbnail=${event.id}`,
         clipUrl: event.has_clip ? `${frigateUrl}/api/events/${event.id}/clip.mp4` : null,
       })
