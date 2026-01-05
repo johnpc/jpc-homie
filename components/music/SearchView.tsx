@@ -65,15 +65,28 @@ export default function SearchView({
           </button>
           {expandedSections.artists && (
             <div className="p-2 space-y-2">
-              {searchResults.artists.map((artist) => (
-                <button
-                  key={artist.Id}
-                  onClick={() => onSelectArtist(artist.Id)}
-                  className="w-full p-3 bg-blue-50 hover:bg-blue-100 rounded-lg text-left transition"
-                >
-                  <div className="font-medium text-gray-900">{artist.Name}</div>
-                </button>
-              ))}
+              {searchResults.artists.map((artist) => {
+                const imageUrl = artist.ImageTags?.Primary
+                  ? `${process.env.NEXT_PUBLIC_JELLYFIN_URL}/Items/${artist.Id}/Images/Primary?maxHeight=100&quality=90`
+                  : null;
+
+                return (
+                  <button
+                    key={artist.Id}
+                    onClick={() => onSelectArtist(artist.Id)}
+                    className="w-full p-3 bg-blue-50 hover:bg-blue-100 rounded-lg text-left transition flex items-center gap-3"
+                  >
+                    {imageUrl && (
+                      <img
+                        src={imageUrl}
+                        alt={artist.Name}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                    )}
+                    <div className="font-medium text-gray-900">{artist.Name}</div>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

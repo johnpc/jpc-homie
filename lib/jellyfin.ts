@@ -5,6 +5,7 @@ export interface JellyfinArtist {
   Id: string;
   Name: string;
   Type: string;
+  ImageTags?: { Primary?: string };
 }
 
 export interface JellyfinAlbum {
@@ -12,6 +13,7 @@ export interface JellyfinAlbum {
   Name: string;
   AlbumArtist?: string;
   Type: string;
+  ImageTags?: { Primary?: string };
 }
 
 export interface JellyfinTrack {
@@ -19,6 +21,7 @@ export interface JellyfinTrack {
   Name: string;
   Artists?: string[];
   Album?: string;
+  AlbumId?: string;
   IndexNumber?: number;
 }
 
@@ -26,6 +29,7 @@ export interface JellyfinPlaylist {
   Id: string;
   Name: string;
   Type: string;
+  ImageTags?: { Primary?: string };
 }
 
 export interface SearchResults {

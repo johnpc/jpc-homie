@@ -40,10 +40,10 @@ export default function QueueMusicItemCard({
         {isDraggable && (
           <div className="text-gray-400 cursor-grab active:cursor-grabbing pt-1">⋮⋮</div>
         )}
-        {item.media_item?.image && (
+        {(item.image?.path || item.media_item?.image) && (
           <img
-            src={item.media_item.image.path}
-            alt={item.media_item.name}
+            src={item.image?.path || item.media_item?.image?.path || ''}
+            alt={item.media_item?.name || item.name}
             className="w-16 h-16 rounded object-cover"
           />
         )}

@@ -12,6 +12,10 @@ export interface QueueItem {
   queue_item_id: string;
   name: string;
   duration?: number;
+  image?: {
+    type: string;
+    path: string;
+  };
   media_item?: {
     name: string;
     image?: {

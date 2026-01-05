@@ -10,6 +10,10 @@ interface BrowseMusicItemCardProps {
 export default function BrowseMusicItemCard({ track }: BrowseMusicItemCardProps) {
   const [showToast, setShowToast] = useState(false);
 
+  const imageUrl = track.AlbumId
+    ? `${process.env.NEXT_PUBLIC_JELLYFIN_URL}/Items/${track.AlbumId}/Images/Primary?maxHeight=100&quality=90`
+    : null;
+
   const playTrack = async () => {
     try {
       await fetch('/api/music/play', {
@@ -50,6 +54,13 @@ export default function BrowseMusicItemCard({ track }: BrowseMusicItemCardProps)
         </div>
       )}
       <div className="w-full p-3 bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 rounded-lg transition flex justify-between items-center shadow-sm hover:shadow-md border border-blue-200">
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt={track.Album || track.Name}
+            className="w-12 h-12 rounded object-cover mr-3"
+          />
+        )}
         <div className="flex-1 min-w-0">
           <div className="font-medium text-gray-900">{track.Name}</div>
           <div className="text-sm text-gray-600">

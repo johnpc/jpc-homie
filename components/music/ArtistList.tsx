@@ -3,6 +3,7 @@
 interface Artist {
   Id: string;
   Name: string;
+  ImageTags?: { Primary?: string };
 }
 
 interface ArtistListProps {
@@ -22,15 +23,28 @@ export default function ArtistList({ artists, loading, onSelectArtist }: ArtistL
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-      {artists?.map((artist) => (
-        <button
-          key={artist.Id}
-          onClick={() => onSelectArtist(artist.Id)}
-          className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 rounded-lg text-left transition shadow-sm hover:shadow-md border border-blue-200"
-        >
-          <div className="font-semibold text-gray-900">{artist.Name}</div>
-        </button>
-      ))}
+      {artists?.map((artist) => {
+        const imageUrl = artist.ImageTags?.Primary
+          ? `${process.env.NEXT_PUBLIC_JELLYFIN_URL}/Items/${artist.Id}/Images/Primary?maxHeight=200&quality=90`
+          : null;
+
+        return (
+          <button
+            key={artist.Id}
+            onClick={() => onSelectArtist(artist.Id)}
+            className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 rounded-lg text-left transition shadow-sm hover:shadow-md border border-blue-200 flex items-center gap-3"
+          >
+            {imageUrl && (
+              <img
+                src={imageUrl}
+                alt={artist.Name}
+                className="w-16 h-16 rounded-full object-cover"
+              />
+            )}
+            <div className="font-semibold text-gray-900">{artist.Name}</div>
+          </button>
+        );
+      })}
     </div>
   );
 }
