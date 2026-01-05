@@ -6,20 +6,40 @@ interface QueueMusicItemCardProps {
   item: QueueItem;
   isCurrentTrack: boolean;
   onRemove: (queueItemId: string) => void;
+  onDragStart: (e: React.DragEvent, index: number) => void;
+  onDragOver: (e: React.DragEvent, index: number) => void;
+  onDragLeave: () => void;
+  onDrop: (e: React.DragEvent, index: number) => void;
+  index: number;
+  isDraggable: boolean;
 }
 
 export default function QueueMusicItemCard({
   item,
   isCurrentTrack,
   onRemove,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  index,
+  isDraggable,
 }: QueueMusicItemCardProps) {
   return (
     <div
+      draggable={isDraggable}
+      onDragStart={(e) => onDragStart(e, index)}
+      onDragOver={(e) => onDragOver(e, index)}
+      onDragLeave={onDragLeave}
+      onDrop={(e) => onDrop(e, index)}
       className={`p-4 rounded-lg border ${
-        isCurrentTrack ? 'bg-green-100 border-green-400' : 'bg-gray-50 border-gray-200'
-      }`}
+        isCurrentTrack ? 'bg-green-50 border-green-500 border-2' : 'bg-gray-50 border-gray-200'
+      } ${isDraggable ? 'cursor-move' : 'opacity-50'}`}
     >
       <div className="flex items-start gap-3">
+        {isDraggable && (
+          <div className="text-gray-400 cursor-grab active:cursor-grabbing pt-1">⋮⋮</div>
+        )}
         {item.media_item?.image && (
           <img
             src={item.media_item.image.path}
@@ -30,7 +50,9 @@ export default function QueueMusicItemCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             {isCurrentTrack && (
-              <span className="text-green-600 font-semibold text-sm">▶ Now Playing</span>
+              <span className="inline-block px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">
+                ▶ Now Playing
+              </span>
             )}
           </div>
           <div className="font-medium text-gray-900 truncate">

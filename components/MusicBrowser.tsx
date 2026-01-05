@@ -101,6 +101,30 @@ export default function MusicBrowser() {
     }
   };
 
+  const reorderQueue = async (fromIndex: number, toIndex: number) => {
+    try {
+      const response = await fetch('/api/music/queue/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from_index: fromIndex,
+          to_index: toIndex,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.warn('Reorder not supported:', error.error);
+        // Don't refetch since reorder didn't work
+        return;
+      }
+
+      refetchQueue();
+    } catch (error) {
+      console.error('Failed to reorder queue:', error);
+    }
+  };
+
   const controlMedia = async (action: MediaControlAction) => {
     try {
       await fetch('/api/music/control', {
@@ -214,7 +238,9 @@ export default function MusicBrowser() {
           />
         )}
 
-        {view === 'queue' && <QueueList queue={queue} onRemove={removeFromQueue} />}
+        {view === 'queue' && (
+          <QueueList queue={queue} onRemove={removeFromQueue} onReorder={reorderQueue} />
+        )}
       </div>
 
       <AlbumTracksModal
