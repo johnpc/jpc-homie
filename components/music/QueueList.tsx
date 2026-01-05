@@ -107,11 +107,11 @@ export default function QueueList({ queue, onRemove, onReorder }: QueueListProps
               key={item.queue_item_id}
               ref={idx === queue.position ? currentTrackRef : null}
               data-queue-index={idx}
-              className={
+              className={`${
                 dragOverIndex === idx && draggedIndex !== idx
                   ? 'border-2 border-blue-400 rounded-lg'
                   : ''
-              }
+              } ${draggedIndex === idx ? 'opacity-50 scale-95' : ''}`}
               onTouchStart={(e) => handleTouchStart(e, idx)}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
