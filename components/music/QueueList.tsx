@@ -13,6 +13,7 @@ interface QueueListProps {
 export default function QueueList({ queue, onRemove, onReorder }: QueueListProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const currentTrackRef = useRef<HTMLDivElement>(null);
 
   const currentPosition = queue?.position ?? 0;
@@ -54,6 +55,39 @@ export default function QueueList({ queue, onRemove, onReorder }: QueueListProps
     setDragOverIndex(null);
   };
 
+  const handleTouchStart = (e: React.TouchEvent, index: number) => {
+    if (index <= currentPosition) return;
+    setTouchStartY(e.touches[0].clientY);
+    setDraggedIndex(index);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (draggedIndex === null || touchStartY === null) return;
+
+    const touchY = e.touches[0].clientY;
+    const elements = document.elementsFromPoint(e.touches[0].clientX, touchY);
+
+    for (const el of elements) {
+      const indexAttr = el.getAttribute('data-queue-index');
+      if (indexAttr !== null) {
+        const index = parseInt(indexAttr);
+        if (index > currentPosition) {
+          setDragOverIndex(index);
+        }
+        break;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
+      onReorder(draggedIndex, dragOverIndex);
+    }
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+    setTouchStartY(null);
+  };
+
   if (!queue?.queue || queue.queue.length === 0) {
     return <div className="text-center text-gray-500 py-8">Queue is empty</div>;
   }
@@ -72,11 +106,15 @@ export default function QueueList({ queue, onRemove, onReorder }: QueueListProps
             <div
               key={item.queue_item_id}
               ref={idx === queue.position ? currentTrackRef : null}
+              data-queue-index={idx}
               className={
                 dragOverIndex === idx && draggedIndex !== idx
                   ? 'border-2 border-blue-400 rounded-lg'
                   : ''
               }
+              onTouchStart={(e) => handleTouchStart(e, idx)}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
               <QueueMusicItemCard
                 item={item}
