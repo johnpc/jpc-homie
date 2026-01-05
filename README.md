@@ -66,6 +66,7 @@ npm run dev
 
 - `HOME_ASSISTANT_URL` - Your Home Assistant URL
 - `HOME_ASSISTANT_TOKEN` - Long-lived access token from Home Assistant
+- `MUSIC_ASSISTANT_URL` - (Optional) Music Assistant server URL for full queue display
 
 Get your token from Home Assistant:
 
