@@ -10,6 +10,7 @@ A conversational AI assistant for controlling your Home Assistant smart home dev
 - 🌡️ Climate control
 - 🔧 Real-time tool usage visualization
 - 📱 Mobile-friendly interface
+- 📶 Eero network device monitoring
 
 ## Quick Start with Docker
 
@@ -26,6 +27,9 @@ JELLYFIN_USERNAME=your_jellyfin_username
 JELLYFIN_PASSWORD=your_jellyfin_password
 EOF
 
+# Create data directory for Eero session
+mkdir -p data
+
 # Start the service
 docker-compose up -d
 
@@ -36,14 +40,39 @@ docker-compose logs -f
 docker-compose down
 ```
 
+### Setting up Eero Network Integration (Optional)
+
+To enable mobile device monitoring:
+
+1. **Authenticate with Eero** (run locally first):
+   ```bash
+   npm install
+   npx ts-node eero-auth.ts
+   ```
+   Follow the prompts to enter your Eero account email and verification code.
+
+2. **Copy the cookie to the data directory**:
+   ```bash
+   cp eero-session.cookie data/
+   ```
+
+3. **Restart the container**:
+   ```bash
+   docker-compose restart
+   ```
+
+The Eero session cookie will be automatically refreshed and persisted in the `./data` volume.
+
 ### Using Docker directly
 
 ```bash
 docker run -d \
   --name homie \
   -p 3000:3000 \
+  -v $(pwd)/data:/app/data \
   -e HOME_ASSISTANT_URL=https://your-ha.duckdns.org \
   -e HOME_ASSISTANT_TOKEN=your_token \
+  -e EERO_COOKIE_PATH=/app/data/eero-session.cookie \
   mrorbitman/homie:main
 ```
 

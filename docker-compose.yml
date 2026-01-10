@@ -14,4 +14,9 @@ services:
       - JELLYFIN_PASSWORD=${JELLYFIN_PASSWORD}
       - NEXT_PUBLIC_JELLYFIN_URL=${JELLYFIN_URL}
       - NEXT_PUBLIC_JELLYFIN_API_KEY=${JELLYFIN_API_KEY}
+      # Eero network integration - path to session cookie inside container
+      - EERO_COOKIE_PATH=/app/data/eero-session.cookie
+    volumes:
+      # Mount directory for persistent Eero session cookie
+      - ./data:/app/data
     restart: unless-stopped
