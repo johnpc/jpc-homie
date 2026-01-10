@@ -59,7 +59,6 @@ export default function Dashboard() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <MobileDevicesCard />
       <StairsCard on={data.stairs.on} total={data.stairs.total} />
       <LocksCard locked={data.locks.locked} total={data.locks.total} />
       <GarageCard state={data.garage.state} time={data.garage.time} />
@@ -79,6 +78,7 @@ export default function Dashboard() {
           lightDetails={room.lightDetails}
         />
       ))}
+      <MobileDevicesCard />
     </div>
   );
 }
