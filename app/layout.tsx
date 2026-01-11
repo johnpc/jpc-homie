@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
+import TabPersistence from '@/components/TabPersistence';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -38,7 +39,10 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <TabPersistence />
+        {children}
+      </body>
     </html>
   );
 }

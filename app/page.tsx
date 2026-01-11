@@ -1,15 +1,15 @@
-import ChatInterface from '@/components/ChatInterface';
-import Header from '@/components/Header';
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-      <div className="container mx-auto px-4 h-screen flex flex-col">
-        <Header />
-        <div className="flex-1 overflow-hidden">
-          <ChatInterface />
-        </div>
-      </div>
-    </main>
-  );
+  const router = useRouter();
+
+  useEffect(() => {
+    const lastTab = localStorage.getItem('lastTab');
+    router.replace(lastTab || '/chat');
+  }, [router]);
+
+  return null;
 }

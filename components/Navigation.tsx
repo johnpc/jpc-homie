@@ -20,9 +20,9 @@ export default function Navigation() {
         <div className="fixed left-0 right-0 top-32 flex justify-center z-50 px-4">
           <nav className="flex flex-wrap gap-2 justify-center bg-white p-4 rounded-lg shadow-lg border border-gray-200 max-w-4xl">
             <Link
-              href="/"
+              href="/chat"
               className={`px-3 py-2 rounded-lg font-medium transition text-sm ${
-                pathname === '/'
+                pathname === '/chat'
                   ? 'bg-blue-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
               }`}

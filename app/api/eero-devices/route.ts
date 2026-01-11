@@ -34,6 +34,11 @@ export async function GET() {
       manufacturer: d.manufacturer,
     }));
 
+    console.log(`Total devices fetched: ${allDevices.length}`);
+    console.log(
+      `Connected: ${allDevices.filter((d) => d.connected).length}, Disconnected: ${allDevices.filter((d) => !d.connected).length}`
+    );
+
     return NextResponse.json(allDevices);
   } catch (error) {
     console.error('Eero fetch error:', error);

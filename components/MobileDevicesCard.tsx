@@ -90,7 +90,10 @@ export default function MobileDevicesCard() {
       {/* All devices - shown when expanded */}
       {expanded && allDevices && (
         <div className="mt-4 pt-4 border-t border-gray-200">
-          <h4 className="text-sm font-semibold text-gray-700 mb-2">All Devices</h4>
+          <h4 className="text-sm font-semibold text-gray-700 mb-2">
+            All Devices ({allDevices.length} total, {allDevices.filter((d) => d.connected).length}{' '}
+            connected, {allDevices.filter((d) => !d.connected).length} disconnected)
+          </h4>
           <div className="space-y-1 max-h-96 overflow-y-auto">
             {allDevices.map((device, i) => (
               <div
