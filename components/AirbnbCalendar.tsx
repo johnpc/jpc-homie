@@ -6,6 +6,7 @@ interface CalendarEvent {
   start: Date;
   end: Date;
   summary: string;
+  phone?: string;
 }
 
 export default function AirbnbCalendar() {
@@ -24,7 +25,7 @@ export default function AirbnbCalendar() {
       if (!response.ok) throw new Error('Failed to fetch calendar');
       const data = await response.json();
       setEvents(
-        data.events.map((e: { start: string; end: string; summary: string }) => ({
+        data.events.map((e: { start: string; end: string; summary: string; phone?: string }) => ({
           ...e,
           start: new Date(e.start),
           end: new Date(e.end),
@@ -51,9 +52,11 @@ export default function AirbnbCalendar() {
       (e) => normalizeDate(e.end).getTime() === normalizedDate.getTime()
     );
 
-    if (checkInEvent && checkOutEvent) return { status: 'transition', label: 'In/Out' };
-    if (checkInEvent) return { status: 'transition', label: 'Check-in' };
-    if (checkOutEvent) return { status: 'transition', label: 'Check-out' };
+    if (checkInEvent && checkOutEvent)
+      return { status: 'transition', label: 'In/Out', phone: checkInEvent.phone };
+    if (checkInEvent) return { status: 'transition', label: 'Check-in', phone: checkInEvent.phone };
+    if (checkOutEvent)
+      return { status: 'transition', label: 'Check-out', phone: checkOutEvent.phone };
 
     // Check if date is within a booking (between start and end, exclusive)
     const event = events.find((e) => {
@@ -62,11 +65,12 @@ export default function AirbnbCalendar() {
       return normalizedDate >= start && normalizedDate < end;
     });
 
-    if (!event) return { status: 'available', label: '' };
+    if (!event) return { status: 'available', label: '', phone: undefined };
 
     return {
       status: event.summary.includes('Not available') ? 'blocked' : 'booked',
       label: '',
+      phone: event.phone,
     };
   };
 
@@ -123,7 +127,7 @@ export default function AirbnbCalendar() {
           </div>
         ))}
         {days.map((day, i) => {
-          const info = day ? getDateStatus(day) : { status: null, label: '' };
+          const info = day ? getDateStatus(day) : { status: null, label: '', phone: undefined };
           const isToday =
             day &&
             day.getDate() === new Date().getDate() &&
@@ -132,7 +136,7 @@ export default function AirbnbCalendar() {
           return (
             <div
               key={i}
-              className={`aspect-square flex items-center justify-center rounded text-gray-900 font-medium ${
+              className={`aspect-square flex flex-col items-center justify-center rounded text-gray-900 font-medium ${
                 isToday ? 'border-4 border-purple-600' : ''
               } ${
                 info.status === 'transition'
@@ -146,7 +150,8 @@ export default function AirbnbCalendar() {
                         : ''
               }`}
             >
-              {day?.getDate()}
+              <div>{day?.getDate()}</div>
+              {info.phone && <div className="text-xs">{info.phone}</div>}
             </div>
           );
         })}

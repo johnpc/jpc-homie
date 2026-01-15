@@ -20,23 +20,57 @@ export async function GET() {
 
     const events = [];
     const lines = icalData.split('\n');
-    let currentEvent: { start?: Date; end?: Date; summary?: string } | null = null;
+    let currentEvent: { start?: Date; end?: Date; summary?: string; phone?: string } | null = null;
+    let currentField = '';
+    let fieldValue = '';
 
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
       if (line.startsWith('BEGIN:VEVENT')) {
         currentEvent = {};
+        currentField = '';
+        fieldValue = '';
       } else if (line.startsWith('END:VEVENT') && currentEvent) {
+        if (currentField === 'DESCRIPTION' && fieldValue) {
+          const phoneMatch = fieldValue.match(/Phone Number \(Last 4 Digits\):\s*(\d{4})/i);
+          if (phoneMatch) {
+            currentEvent.phone = phoneMatch[1];
+          }
+        }
         events.push(currentEvent);
         currentEvent = null;
+        currentField = '';
+        fieldValue = '';
       } else if (currentEvent) {
-        if (line.startsWith('DTSTART')) {
-          const date = line.split(':')[1].trim();
-          currentEvent.start = parseICalDate(date);
-        } else if (line.startsWith('DTEND')) {
-          const date = line.split(':')[1].trim();
-          currentEvent.end = parseICalDate(date);
-        } else if (line.startsWith('SUMMARY')) {
-          currentEvent.summary = line.split(':')[1].trim();
+        if (line.startsWith(' ') || line.startsWith('\t')) {
+          fieldValue += line.trim();
+        } else {
+          if (currentField === 'DESCRIPTION' && fieldValue) {
+            const phoneMatch = fieldValue.match(/Phone Number \(Last 4 Digits\):\s*(\d{4})/i);
+            if (phoneMatch) {
+              currentEvent.phone = phoneMatch[1];
+            }
+          }
+
+          if (line.startsWith('DTSTART')) {
+            const date = line.split(':')[1].trim();
+            currentEvent.start = parseICalDate(date);
+            currentField = '';
+          } else if (line.startsWith('DTEND')) {
+            const date = line.split(':')[1].trim();
+            currentEvent.end = parseICalDate(date);
+            currentField = '';
+          } else if (line.startsWith('SUMMARY')) {
+            currentEvent.summary = line.split(':')[1].trim();
+            currentField = '';
+          } else if (line.startsWith('DESCRIPTION')) {
+            currentField = 'DESCRIPTION';
+            fieldValue = line.split(':')[1]?.trim() || '';
+          } else {
+            currentField = '';
+            fieldValue = '';
+          }
         }
       }
     }
