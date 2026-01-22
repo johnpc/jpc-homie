@@ -27,7 +27,9 @@ export async function GET() {
       const name = (d.nickname || d.hostname || '').toLowerCase();
       return (
         d.wireless &&
-        (name.includes('iphone') || (name.includes('android') && name.includes('phone')))
+        (name.includes('iphone') ||
+          (name.includes('android') && name.includes('phone')) ||
+          d.manufacturer === 'Private')
       );
     });
 
