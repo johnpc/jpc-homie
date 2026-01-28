@@ -6,8 +6,7 @@ import StairsCard from './StairsCard';
 import LocksCard from './LocksCard';
 import GarageCard from './GarageCard';
 import PowerCard from './PowerCard';
-import AllLightsCard from './AllLightsCard';
-import RoomCard from './RoomCard';
+import LightsWidget from './LightsWidget';
 
 interface DashboardData {
   stairs: { on: number; total: number };
@@ -63,21 +62,12 @@ export default function Dashboard() {
       <LocksCard locked={data.locks.locked} total={data.locks.total} />
       <GarageCard state={data.garage.state} time={data.garage.time} />
       <PowerCard kw={data.power.kw} kwh={data.power.kwh} cost={data.power.cost} />
-      <AllLightsCard
-        lightsOn={data.lights}
-        brightness={data.lightsBrightness}
-        lights={data.allLights}
+      <LightsWidget
+        rooms={rooms ?? []}
+        allLightsOn={data.lights}
+        allBrightness={data.lightsBrightness}
+        allLights={data.allLights}
       />
-      {rooms?.map((room) => (
-        <RoomCard
-          key={room.id}
-          id={room.id}
-          name={room.name}
-          lightsOn={room.lightsOn}
-          avgBrightness={room.avgBrightness}
-          lightDetails={room.lightDetails}
-        />
-      ))}
       <MobileDevicesCard />
     </div>
   );
