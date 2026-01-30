@@ -151,7 +151,9 @@ export default function AirbnbCalendar() {
               }`}
             >
               <div>{day?.getDate()}</div>
-              {info.phone && <div className="text-xs">{info.phone}</div>}
+              {(info.status === 'booked' || info.status === 'transition') && (
+                <div className="text-xs">{info.phone || '🚫'}</div>
+              )}
             </div>
           );
         })}
