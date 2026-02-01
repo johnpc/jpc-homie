@@ -137,7 +137,7 @@ export default function AirbnbCalendar() {
             <div
               key={i}
               className={`aspect-square flex flex-col items-center justify-center rounded text-gray-900 font-medium ${
-                isToday ? 'border-4 border-purple-600' : ''
+                isToday ? 'ring-2 ring-inset ring-purple-600' : ''
               } ${
                 info.status === 'transition'
                   ? 'bg-yellow-200'
