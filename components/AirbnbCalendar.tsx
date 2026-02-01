@@ -151,6 +151,7 @@ export default function AirbnbCalendar() {
               }`}
             >
               <div>{day?.getDate()}</div>
+              {info.status === 'available' && <div className="text-xs">-</div>}
               {(info.status === 'booked' || info.status === 'transition') && (
                 <div className="text-xs">{info.phone || '🚫'}</div>
               )}
