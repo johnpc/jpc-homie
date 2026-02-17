@@ -11,7 +11,7 @@ export default function BrowseMusicItemCard({ track }: BrowseMusicItemCardProps)
   const [showToast, setShowToast] = useState(false);
 
   const imageUrl = track.AlbumId
-    ? `${process.env.NEXT_PUBLIC_JELLYFIN_URL}/Items/${track.AlbumId}/Images/Primary?maxHeight=100&quality=90`
+    ? `/api/jellyfin/image/${track.AlbumId}?maxHeight=100&quality=90`
     : null;
 
   const playTrack = async () => {

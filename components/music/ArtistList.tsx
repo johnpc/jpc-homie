@@ -25,7 +25,7 @@ export default function ArtistList({ artists, loading, onSelectArtist }: ArtistL
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
       {artists?.map((artist) => {
         const imageUrl = artist.ImageTags?.Primary
-          ? `${process.env.NEXT_PUBLIC_JELLYFIN_URL}/Items/${artist.Id}/Images/Primary?maxHeight=200&quality=90`
+          ? `/api/jellyfin/image/${artist.Id}?maxHeight=200&quality=90`
           : null;
 
         return (

@@ -25,7 +25,7 @@ export default function PlaylistList({ playlists, loading, onSelectPlaylist }: P
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
       {playlists?.map((playlist) => {
         const imageUrl = playlist.ImageTags?.Primary
-          ? `${process.env.NEXT_PUBLIC_JELLYFIN_URL}/Items/${playlist.Id}/Images/Primary?maxHeight=200&quality=90`
+          ? `/api/jellyfin/image/${playlist.Id}?maxHeight=200&quality=90`
           : null;
 
         return (

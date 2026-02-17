@@ -67,7 +67,7 @@ export default function SearchView({
             <div className="p-2 space-y-2">
               {searchResults.artists.map((artist) => {
                 const imageUrl = artist.ImageTags?.Primary
-                  ? `${process.env.NEXT_PUBLIC_JELLYFIN_URL}/Items/${artist.Id}/Images/Primary?maxHeight=100&quality=90`
+                  ? `/api/jellyfin/image/${artist.Id}?maxHeight=100&quality=90`
                   : null;
 
                 return (
