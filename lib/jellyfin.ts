@@ -1,6 +1,3 @@
-const JELLYFIN_URL = process.env.NEXT_PUBLIC_JELLYFIN_URL;
-const JELLYFIN_API_KEY = process.env.NEXT_PUBLIC_JELLYFIN_API_KEY;
-
 export interface JellyfinArtist {
   Id: string;
   Name: string;
@@ -39,74 +36,36 @@ export interface SearchResults {
 }
 
 class JellyfinService {
-  private async fetch<T>(endpoint: string): Promise<T> {
-    const response = await fetch(`${JELLYFIN_URL}${endpoint}`, {
-      headers: {
-        'X-Emby-Token': JELLYFIN_API_KEY || '',
-      },
-    });
-    if (!response.ok) throw new Error('Jellyfin API error');
-    return response.json();
-  }
-
   async getArtists(searchTerm?: string): Promise<JellyfinArtist[]> {
-    const query = searchTerm ? `?searchTerm=${encodeURIComponent(searchTerm)}` : '';
-    const data = await this.fetch<{ Items: JellyfinArtist[] }>(`/Artists${query}`);
-    return data.Items || [];
+    const params = new URLSearchParams({ action: 'artists' });
+    if (searchTerm) params.set('searchTerm', searchTerm);
+    const res = await fetch(`/api/jellyfin?${params}`);
+    return res.json();
   }
 
   async getArtistTracks(artistId: string): Promise<JellyfinTrack[]> {
-    const data = await this.fetch<{ Items: JellyfinTrack[] }>(
-      `/Items?ArtistIds=${artistId}&IncludeItemTypes=Audio&Recursive=true&Limit=100`
-    );
-    return data.Items || [];
-  }
-
-  async searchTracks(searchTerm: string): Promise<JellyfinTrack[]> {
-    const data = await this.fetch<{ Items: JellyfinTrack[] }>(
-      `/Items?searchTerm=${encodeURIComponent(searchTerm)}&IncludeItemTypes=Audio&Recursive=true&Limit=50`
-    );
-    return data.Items || [];
+    const res = await fetch(`/api/jellyfin?action=artistTracks&artistId=${artistId}`);
+    return res.json();
   }
 
   async searchAll(searchTerm: string): Promise<SearchResults> {
-    const [artistsData, albumsData, tracksData] = await Promise.all([
-      this.fetch<{ Items: JellyfinArtist[] }>(
-        `/Artists?searchTerm=${encodeURIComponent(searchTerm)}&Limit=20`
-      ),
-      this.fetch<{ Items: JellyfinAlbum[] }>(
-        `/Items?searchTerm=${encodeURIComponent(searchTerm)}&IncludeItemTypes=MusicAlbum&Recursive=true&Limit=20`
-      ),
-      this.fetch<{ Items: JellyfinTrack[] }>(
-        `/Items?searchTerm=${encodeURIComponent(searchTerm)}&IncludeItemTypes=Audio&Recursive=true&Limit=30`
-      ),
-    ]);
-
-    return {
-      artists: artistsData.Items || [],
-      albums: albumsData.Items || [],
-      tracks: tracksData.Items || [],
-    };
+    const res = await fetch(`/api/jellyfin?action=search&term=${encodeURIComponent(searchTerm)}`);
+    return res.json();
   }
 
   async getAlbumTracks(albumId: string): Promise<JellyfinTrack[]> {
-    const data = await this.fetch<{ Items: JellyfinTrack[] }>(
-      `/Items?ParentId=${albumId}&IncludeItemTypes=Audio&Recursive=true`
-    );
-    return data.Items || [];
+    const res = await fetch(`/api/jellyfin?action=albumTracks&albumId=${albumId}`);
+    return res.json();
   }
 
   async getPlaylists(): Promise<JellyfinPlaylist[]> {
-    const data = await this.fetch<{ Items: JellyfinPlaylist[] }>(
-      `/Items?IncludeItemTypes=Playlist&Recursive=true`
-    );
-    return data.Items || [];
+    const res = await fetch(`/api/jellyfin?action=playlists`);
+    return res.json();
   }
 
   async getPlaylistTracks(playlistId: string): Promise<JellyfinTrack[]> {
-    const response = await fetch(`/api/jellyfin/playlists/${playlistId}`);
-    if (!response.ok) throw new Error('Failed to fetch playlist tracks');
-    const data = await response.json();
+    const res = await fetch(`/api/jellyfin/playlists/${playlistId}`);
+    const data = await res.json();
     return data.Items || [];
   }
 }
