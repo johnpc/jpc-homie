@@ -12,6 +12,8 @@ export async function GET() {
     const cameras = [
       { id: 'front_porch', entity: 'camera.front_porch_reolink_fluent' },
       { id: 'backyard', entity: 'camera.backyard_reolink_fluent' },
+      { id: 'driveway', entity: 'camera.driveway_fluent' },
+      { id: 'driveway_adu', entity: 'camera.driveway_adu_fluent' },
     ];
 
     const responses = await Promise.all(
