@@ -28,6 +28,7 @@ export default function RemoteControl() {
 
   const startHold = useCallback(
     (button: string) => {
+      sendRemoteButton(button);
       let delay = 400;
       const minDelay = 80;
 
@@ -36,7 +37,7 @@ export default function RemoteControl() {
         delay = Math.max(minDelay, delay * 0.75);
         timeoutRef.current = setTimeout(repeat, delay);
       };
-      repeat();
+      timeoutRef.current = setTimeout(repeat, 500);
     },
     [sendRemoteButton]
   );
