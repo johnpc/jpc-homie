@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface MediaPlayerState {
@@ -16,6 +16,37 @@ interface MediaPlayerState {
 export default function RemoteControl() {
   const queryClient = useQueryClient();
   const [textInput, setTextInput] = useState('');
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const sendRemoteButton = useCallback(async (button: string) => {
+    await fetch('/api/tv/remote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ button }),
+    });
+  }, []);
+
+  const startHold = useCallback(
+    (button: string) => {
+      let delay = 400;
+      const minDelay = 80;
+
+      const repeat = () => {
+        sendRemoteButton(button);
+        delay = Math.max(minDelay, delay * 0.75);
+        timeoutRef.current = setTimeout(repeat, delay);
+      };
+      repeat();
+    },
+    [sendRemoteButton]
+  );
+
+  const stopHold = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
 
   const { data: tvState } = useQuery<MediaPlayerState>({
     queryKey: ['tv-state'],
@@ -160,13 +191,11 @@ export default function RemoteControl() {
         <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
           <div></div>
           <button
-            onClick={async () => {
-              await fetch('/api/tv/remote', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ button: 'Up' }),
-              });
-            }}
+            onMouseDown={() => startHold('Up')}
+            onMouseUp={stopHold}
+            onMouseLeave={stopHold}
+            onTouchStart={() => startHold('Up')}
+            onTouchEnd={stopHold}
             className="bg-gray-200 hover:bg-gray-300 p-4 rounded-lg font-bold"
           >
             ⬆️
@@ -174,13 +203,11 @@ export default function RemoteControl() {
           <div></div>
 
           <button
-            onClick={async () => {
-              await fetch('/api/tv/remote', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ button: 'Left' }),
-              });
-            }}
+            onMouseDown={() => startHold('Left')}
+            onMouseUp={stopHold}
+            onMouseLeave={stopHold}
+            onTouchStart={() => startHold('Left')}
+            onTouchEnd={stopHold}
             className="bg-gray-200 hover:bg-gray-300 p-4 rounded-lg font-bold"
           >
             ⬅️
@@ -198,13 +225,11 @@ export default function RemoteControl() {
             OK
           </button>
           <button
-            onClick={async () => {
-              await fetch('/api/tv/remote', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ button: 'Right' }),
-              });
-            }}
+            onMouseDown={() => startHold('Right')}
+            onMouseUp={stopHold}
+            onMouseLeave={stopHold}
+            onTouchStart={() => startHold('Right')}
+            onTouchEnd={stopHold}
             className="bg-gray-200 hover:bg-gray-300 p-4 rounded-lg font-bold"
           >
             ➡️
@@ -212,13 +237,11 @@ export default function RemoteControl() {
 
           <div></div>
           <button
-            onClick={async () => {
-              await fetch('/api/tv/remote', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ button: 'Down' }),
-              });
-            }}
+            onMouseDown={() => startHold('Down')}
+            onMouseUp={stopHold}
+            onMouseLeave={stopHold}
+            onTouchStart={() => startHold('Down')}
+            onTouchEnd={stopHold}
             className="bg-gray-200 hover:bg-gray-300 p-4 rounded-lg font-bold"
           >
             ⬇️
