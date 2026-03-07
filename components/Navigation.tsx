@@ -109,6 +109,16 @@ export default function Navigation() {
             >
               ⚡ Scripts
             </Link>
+            <Link
+              href="/car"
+              className={`px-3 py-2 rounded-lg font-medium transition text-sm ${
+                pathname === '/car'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+            >
+              🚗 Car
+            </Link>
             <a
               href="https://wall.jpc.io"
               target="_blank"
