@@ -74,14 +74,14 @@ export async function GET() {
   if (tessieResponse?.ok) {
     const charges = await tessieResponse.json();
     const sessions = (charges.results || []).map(
-      (c: { ended_at: number; energy_added: number; since_last_charge: number }) => ({
+      (c: { ended_at: number; energy_added: number; miles_added: number }) => ({
         date: new Date(c.ended_at * 1000).toLocaleDateString('en-US', {
           month: 'short',
           day: 'numeric',
         }),
         kWh: Math.round(c.energy_added * 10) / 10,
         cost: Math.round(c.energy_added * RATE_PER_KWH * 100) / 100,
-        miles: Math.round(c.since_last_charge),
+        miles: Math.round(c.miles_added),
       })
     );
     const totalKwh = sessions.reduce((sum: number, s: { kWh: number }) => sum + s.kWh, 0);

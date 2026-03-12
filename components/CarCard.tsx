@@ -291,7 +291,7 @@ export default function CarCard() {
               <tr className="text-gray-500 text-xs">
                 <th className="text-left pb-1">Date</th>
                 <th className="text-right pb-1">kWh</th>
-                <th className="text-right pb-1">Driven</th>
+                <th className="text-right pb-1">Range</th>
                 <th className="text-right pb-1">Cost</th>
               </tr>
             </thead>
@@ -300,7 +300,7 @@ export default function CarCard() {
                 <tr key={i} className="border-t border-gray-100">
                   <td className="py-1 text-gray-700">{s.date}</td>
                   <td className="py-1 text-right text-gray-700">{s.kWh}</td>
-                  <td className="py-1 text-right text-gray-700">{s.miles} mi</td>
+                  <td className="py-1 text-right text-gray-700">+{s.miles} mi</td>
                   <td className="py-1 text-right text-gray-700">${s.cost.toFixed(2)}</td>
                 </tr>
               ))}
