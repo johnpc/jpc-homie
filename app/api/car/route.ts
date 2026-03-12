@@ -29,22 +29,70 @@ export interface CarData {
   garage: { state: string; lastChanged: string };
   climate: { state: string; currentTemp: number; targetTemp: number };
   update: { available: boolean; installed: string; latest: string };
+  chargingCost: {
+    kWh: number;
+    cost: number;
+    sessions: { date: string; kWh: number; cost: number; miles: number }[];
+  } | null;
 }
 
 export async function GET() {
   const haUrl = process.env.HOME_ASSISTANT_URL;
   const haToken = process.env.HOME_ASSISTANT_TOKEN;
+  const tessieKey = process.env.TESSIE_API_KEY;
+  const VIN = process.env.TESSIE_VIN || '5YJYGDEE2MF198095';
+  const RATE_PER_KWH = 0.17;
 
   if (!haUrl || !haToken) {
     return NextResponse.json({ error: 'Home Assistant not configured' }, { status: 500 });
   }
 
-  const response = await fetch(`${haUrl}/api/states`, {
-    headers: { Authorization: `Bearer ${haToken}` },
-  });
+  // Fetch HA states and Tessie charges in parallel
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+  const fromTs = Math.floor(startOfMonth.getTime() / 1000);
 
-  const entities: Entity[] = await response.json();
+  const [haResponse, tessieResponse] = await Promise.all([
+    fetch(`${haUrl}/api/states`, { headers: { Authorization: `Bearer ${haToken}` } }),
+    tessieKey
+      ? fetch(`https://api.tessie.com/${VIN}/charges?from=${fromTs}`, {
+          headers: { Authorization: `Bearer ${tessieKey}` },
+        }).catch(() => null)
+      : Promise.resolve(null),
+  ]);
+
+  const entities: Entity[] = await haResponse.json();
   const get = (id: string) => entities.find((e) => e.entity_id === id);
+
+  // Calculate charging cost from Tessie
+  let chargingCost: {
+    kWh: number;
+    cost: number;
+    sessions: { date: string; kWh: number; cost: number; miles: number }[];
+  } | null = null;
+  if (tessieResponse?.ok) {
+    const charges = await tessieResponse.json();
+    const sessions = (charges.results || []).map(
+      (c: { ended_at: number; energy_added: number; since_last_charge: number }) => ({
+        date: new Date(c.ended_at * 1000).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        }),
+        kWh: Math.round(c.energy_added * 10) / 10,
+        cost: Math.round(c.energy_added * RATE_PER_KWH * 100) / 100,
+        miles: Math.round(c.since_last_charge),
+      })
+    );
+    const totalKwh = sessions.reduce((sum: number, s: { kWh: number }) => sum + s.kWh, 0);
+    if (totalKwh > 0) {
+      chargingCost = {
+        kWh: Math.round(totalKwh * 10) / 10,
+        cost: Math.round(totalKwh * RATE_PER_KWH * 100) / 100,
+        sessions,
+      };
+    }
+  }
 
   const location = get('device_tracker.tesla_location');
   const lat = location?.attributes.latitude as number | undefined;
@@ -89,6 +137,7 @@ export async function GET() {
       installed: (get('update.tesla_update')?.attributes.installed_version as string) || '',
       latest: (get('update.tesla_update')?.attributes.latest_version as string) || '',
     },
+    chargingCost,
   };
 
   return NextResponse.json(data);

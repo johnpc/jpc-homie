@@ -263,6 +263,52 @@ export default function CarCard() {
           )}
         </div>
       </div>
+
+      {/* Charging Cost */}
+      {data.chargingCost && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold mb-3 text-gray-900">Charging This Month</h3>
+          <div className="grid grid-cols-3 gap-3 text-center mb-4">
+            <div>
+              <div className="text-2xl font-bold text-green-600">
+                ${data.chargingCost.cost.toFixed(2)}
+              </div>
+              <div className="text-xs text-gray-500">Est. Cost</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-gray-900">{data.chargingCost.kWh}</div>
+              <div className="text-xs text-gray-500">kWh</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-gray-900">
+                {data.chargingCost.sessions.length}
+              </div>
+              <div className="text-xs text-gray-500">Sessions</div>
+            </div>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-gray-500 text-xs">
+                <th className="text-left pb-1">Date</th>
+                <th className="text-right pb-1">kWh</th>
+                <th className="text-right pb-1">Driven</th>
+                <th className="text-right pb-1">Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.chargingCost.sessions.map((s, i) => (
+                <tr key={i} className="border-t border-gray-100">
+                  <td className="py-1 text-gray-700">{s.date}</td>
+                  <td className="py-1 text-right text-gray-700">{s.kWh}</td>
+                  <td className="py-1 text-right text-gray-700">{s.miles} mi</td>
+                  <td className="py-1 text-right text-gray-700">${s.cost.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="text-xs text-gray-400 mt-2 text-center">@ $0.17/kWh (off-peak)</div>
+        </div>
+      )}
     </div>
   );
 }
