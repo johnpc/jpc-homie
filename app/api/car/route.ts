@@ -32,8 +32,32 @@ export interface CarData {
   chargingCost: {
     kWh: number;
     cost: number;
-    sessions: { date: string; kWh: number; cost: number; miles: number }[];
+    sessions: { date: string; kWh: number; cost: number; miles: number; rate: number }[];
   } | null;
+}
+
+// DTE Time-of-Use rates ($/kWh)
+function getDTERate(timestamp: number): number {
+  const date = new Date(timestamp * 1000);
+  const hour = date.getHours();
+  const day = date.getDay(); // 0=Sun, 6=Sat
+  const month = date.getMonth(); // 0=Jan, 5=Jun, 8=Sep
+  const isWeekend = day === 0 || day === 6;
+  const isSummer = month >= 5 && month <= 8; // Jun-Sep
+
+  // Super off-peak: 1am-7am (all days)
+  if (hour >= 1 && hour < 7) return 0.11;
+
+  // Weekends are all off-peak
+  if (isWeekend) return 0.155;
+
+  // Peak: 3pm-7pm weekdays
+  if (hour >= 15 && hour < 19) {
+    return isSummer ? 0.21 : 0.17;
+  }
+
+  // Off-peak: all other times
+  return 0.155;
 }
 
 export async function GET() {
@@ -41,7 +65,6 @@ export async function GET() {
   const haToken = process.env.HOME_ASSISTANT_TOKEN;
   const tessieKey = process.env.TESSIE_API_KEY;
   const VIN = process.env.TESSIE_VIN || '5YJYGDEE2MF198095';
-  const RATE_PER_KWH = 0.17;
 
   if (!haUrl || !haToken) {
     return NextResponse.json({ error: 'Home Assistant not configured' }, { status: 500 });
@@ -65,30 +88,37 @@ export async function GET() {
   const entities: Entity[] = await haResponse.json();
   const get = (id: string) => entities.find((e) => e.entity_id === id);
 
-  // Calculate charging cost from Tessie
+  // Calculate charging cost from Tessie using DTE time-of-use rates
   let chargingCost: {
     kWh: number;
     cost: number;
-    sessions: { date: string; kWh: number; cost: number; miles: number }[];
+    sessions: { date: string; kWh: number; cost: number; miles: number; rate: number }[];
   } | null = null;
   if (tessieResponse?.ok) {
     const charges = await tessieResponse.json();
     const sessions = (charges.results || []).map(
-      (c: { ended_at: number; energy_added: number; miles_added: number }) => ({
-        date: new Date(c.ended_at * 1000).toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-        }),
-        kWh: Math.round(c.energy_added * 10) / 10,
-        cost: Math.round(c.energy_added * RATE_PER_KWH * 100) / 100,
-        miles: Math.round(c.miles_added),
-      })
+      (c: { started_at: number; ended_at: number; energy_added: number; miles_added: number }) => {
+        // Use midpoint of charge session for rate calculation
+        const midpoint = Math.floor((c.started_at + c.ended_at) / 2);
+        const rate = getDTERate(midpoint);
+        return {
+          date: new Date(c.ended_at * 1000).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+          }),
+          kWh: Math.round(c.energy_added * 10) / 10,
+          cost: Math.round(c.energy_added * rate * 100) / 100,
+          miles: Math.round(c.miles_added),
+          rate,
+        };
+      }
     );
     const totalKwh = sessions.reduce((sum: number, s: { kWh: number }) => sum + s.kWh, 0);
+    const totalCost = sessions.reduce((sum: number, s: { cost: number }) => sum + s.cost, 0);
     if (totalKwh > 0) {
       chargingCost = {
         kWh: Math.round(totalKwh * 10) / 10,
-        cost: Math.round(totalKwh * RATE_PER_KWH * 100) / 100,
+        cost: Math.round(totalCost * 100) / 100,
         sessions,
       };
     }
