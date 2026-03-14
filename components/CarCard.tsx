@@ -302,14 +302,14 @@ export default function CarCard() {
                   <td className="py-1 text-gray-700">{s.date}</td>
                   <td className="py-1 text-right text-gray-700">{s.kWh}</td>
                   <td className="py-1 text-right text-gray-700">+{s.miles} mi</td>
-                  <td className="py-1 text-right text-gray-500">${s.rate.toFixed(2)}</td>
+                  <td className="py-1 text-right text-gray-500">{Math.round(s.rate * 100)}¢</td>
                   <td className="py-1 text-right text-gray-700">${s.cost.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           <div className="text-xs text-gray-400 mt-2 text-center">
-            DTE time-of-use rates: $0.11 super off-peak (1-7am) · $0.155 off-peak · $0.17-0.21 peak
+            DTE rates: 11¢ super off-peak (1-7am) · 15.5¢ off-peak · 17-21¢ peak
           </div>
         </div>
       )}
