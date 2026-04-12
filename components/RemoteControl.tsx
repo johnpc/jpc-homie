@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface MediaPlayerState {
@@ -16,7 +16,6 @@ interface MediaPlayerState {
 export default function RemoteControl() {
   const queryClient = useQueryClient();
   const [textInput, setTextInput] = useState('');
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const sendRemoteButton = useCallback(async (button: string) => {
     await fetch('/api/tv/remote', {
@@ -24,29 +23,6 @@ export default function RemoteControl() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ button }),
     });
-  }, []);
-
-  const startHold = useCallback(
-    (button: string) => {
-      sendRemoteButton(button);
-      let delay = 400;
-      const minDelay = 80;
-
-      const repeat = () => {
-        sendRemoteButton(button);
-        delay = Math.max(minDelay, delay * 0.75);
-        timeoutRef.current = setTimeout(repeat, delay);
-      };
-      timeoutRef.current = setTimeout(repeat, 500);
-    },
-    [sendRemoteButton]
-  );
-
-  const stopHold = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
   }, []);
 
   const { data: tvState } = useQuery<MediaPlayerState>({
@@ -192,11 +168,7 @@ export default function RemoteControl() {
         <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
           <div></div>
           <button
-            onMouseDown={() => startHold('Up')}
-            onMouseUp={stopHold}
-            onMouseLeave={stopHold}
-            onTouchStart={() => startHold('Up')}
-            onTouchEnd={stopHold}
+            onClick={() => sendRemoteButton('Up')}
             className="bg-gray-200 hover:bg-gray-300 p-4 rounded-lg font-bold"
           >
             ⬆️
@@ -204,33 +176,19 @@ export default function RemoteControl() {
           <div></div>
 
           <button
-            onMouseDown={() => startHold('Left')}
-            onMouseUp={stopHold}
-            onMouseLeave={stopHold}
-            onTouchStart={() => startHold('Left')}
-            onTouchEnd={stopHold}
+            onClick={() => sendRemoteButton('Left')}
             className="bg-gray-200 hover:bg-gray-300 p-4 rounded-lg font-bold"
           >
             ⬅️
           </button>
           <button
-            onClick={async () => {
-              await fetch('/api/tv/remote', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ button: 'Select' }),
-              });
-            }}
+            onClick={() => sendRemoteButton('Select')}
             className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg font-bold"
           >
             OK
           </button>
           <button
-            onMouseDown={() => startHold('Right')}
-            onMouseUp={stopHold}
-            onMouseLeave={stopHold}
-            onTouchStart={() => startHold('Right')}
-            onTouchEnd={stopHold}
+            onClick={() => sendRemoteButton('Right')}
             className="bg-gray-200 hover:bg-gray-300 p-4 rounded-lg font-bold"
           >
             ➡️
@@ -238,11 +196,7 @@ export default function RemoteControl() {
 
           <div></div>
           <button
-            onMouseDown={() => startHold('Down')}
-            onMouseUp={stopHold}
-            onMouseLeave={stopHold}
-            onTouchStart={() => startHold('Down')}
-            onTouchEnd={stopHold}
+            onClick={() => sendRemoteButton('Down')}
             className="bg-gray-200 hover:bg-gray-300 p-4 rounded-lg font-bold"
           >
             ⬇️
@@ -252,25 +206,13 @@ export default function RemoteControl() {
 
         <div className="grid grid-cols-2 gap-2 mt-4">
           <button
-            onClick={async () => {
-              await fetch('/api/tv/remote', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ button: 'Back' }),
-              });
-            }}
+            onClick={() => sendRemoteButton('Back')}
             className="bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg font-medium"
           >
             ◀️ Back
           </button>
           <button
-            onClick={async () => {
-              await fetch('/api/tv/remote', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ button: 'Home' }),
-              });
-            }}
+            onClick={() => sendRemoteButton('Home')}
             className="bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg font-medium"
           >
             🏠 Home
